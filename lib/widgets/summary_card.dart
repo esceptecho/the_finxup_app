@@ -50,7 +50,7 @@ class SummaryCard extends ConsumerWidget {
         return Card(
           margin: const EdgeInsets.all(4.0),
           elevation: 6,
-          shadowColor: AppThemeHSL.primaryExtraLight.withValues(alpha: 0.3),
+          // shadowColor: AppThemeHSL.textMuted.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(7),
           ),
@@ -59,7 +59,7 @@ class SummaryCard extends ConsumerWidget {
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppThemeHSL.primaryExtraLight, AppThemeHSL.surfaceMid],
+                colors: [AppThemeHSL.surface, AppThemeHSL.surfaceMid],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

@@ -6,9 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:the_finxup_app/screens/consumer_transaction_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
-class Movimientos extends StatelessWidget {
+class Movimientos extends StatefulWidget {
   const Movimientos({super.key});
 
+  @override
+  State<Movimientos> createState() => _MovimientosState();
+}
+
+class _MovimientosState extends State<Movimientos> {
   @override
   Widget build(BuildContext context) {
     return InputChip(
@@ -25,10 +30,18 @@ class Movimientos extends StatelessWidget {
           ),
         );
       },
-      onDeleted: null, // Esto oculta el icono
+      onDeleted: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ConsumerTransactionsScreen(openAddModal: true),
+          ),
+        );
+      }, // Esto oculta el icono
+      deleteIcon: Icon(Icons.add, size: 24),
       avatar: Icon(
         Icons.swap_horiz_rounded,
-        size: 28,
+        size: 24,
         color: AppThemeHSL.textSecondary,
       ),
       label: Text(

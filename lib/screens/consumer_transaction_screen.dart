@@ -14,7 +14,8 @@ import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/transaction_card.dart';
 
 class ConsumerTransactionsScreen extends ConsumerStatefulWidget {
-  const ConsumerTransactionsScreen({super.key});
+  final bool openAddModal; // Parámetro para abrir el modal automáticamente
+  const ConsumerTransactionsScreen({super.key, this.openAddModal = false});
 
   @override
   ConsumerState<ConsumerTransactionsScreen> createState() =>
@@ -46,6 +47,13 @@ class _ConsumerTransactionsScreenState
       curve: Curves.easeInOut,
     );
     _animationController.forward();
+
+    // 2. Abrir modal automáticamente si se solicita
+    if (widget.openAddModal) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showAddCardModal(context);
+      });
+    }
   }
 
   @override
@@ -93,7 +101,7 @@ class _ConsumerTransactionsScreenState
     ref.read(billListNotifierProvider.notifier).delete(id);
   }
 
-  void _showAddCardModal(BuildContext context) {
+  void showAddCardModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -112,7 +120,7 @@ class _ConsumerTransactionsScreenState
   Widget _buildFAB(double percentage) {
     return FloatingActionButton(
       // mini: true,
-      onPressed: () => _showAddCardModal(context),
+      onPressed: () => showAddCardModal(context),
       backgroundColor: wineColor,
       elevation: 4,
       heroTag: percentage,
@@ -211,7 +219,7 @@ class _ConsumerTransactionsScreenState
     // final summary = ref.watch(financialSummaryProvider);
     // final percentage = summary.percentage;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
@@ -220,7 +228,7 @@ class _ConsumerTransactionsScreenState
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(7),
           boxShadow: [
             BoxShadow(
               color: AppThemeHSL.primaryDark.withValues(alpha: 0.2),
@@ -230,7 +238,7 @@ class _ConsumerTransactionsScreenState
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -241,8 +249,8 @@ class _ConsumerTransactionsScreenState
                     'Balance Total',
                     style: TextStyle(
                       color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                   Container(
@@ -283,14 +291,15 @@ class _ConsumerTransactionsScreenState
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       CurrencyFormatter.formatAmount(balance), 
                       style: TextStyle(
-                        color: Colors.white,
+                        color: balance > 0
+                            ? AppThemeHSL.incomeLight
+                            : AppThemeHSL.expenseLight,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
                       ),
@@ -368,7 +377,7 @@ class _ConsumerTransactionsScreenState
                                     ),
 
                                     TypewriterAnimatedText(
-                                      "Tocar para esconder 👇",
+                                      "Esconder 👇",
                                       textStyle: TextStyle(
                                         color: AppThemeHSL.textSecondary
                                             .withValues(alpha: 0.9),
@@ -531,12 +540,12 @@ class _ConsumerCategoryFilterSelectorState
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Container(
         height: 56,
         decoration: BoxDecoration(
           color: const Color(0xFF161B22),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(7),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
@@ -552,7 +561,7 @@ class _ConsumerCategoryFilterSelectorState
                     color: widget.selectedCategory == 'transactions'
                         ? AppThemeHSL.primaryExtraLight.withValues(alpha: 0.3)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(7),
                     boxShadow: widget.selectedCategory == 'transactions'
                         ? [
                             BoxShadow(
@@ -604,7 +613,7 @@ class _ConsumerCategoryFilterSelectorState
                     color: widget.selectedCategory == 'invoices'
                         ? AppThemeHSL.primaryExtraLight.withValues(alpha: 0.3)
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(7),
                     boxShadow: widget.selectedCategory == 'invoices'
                         ? [
                             BoxShadow(

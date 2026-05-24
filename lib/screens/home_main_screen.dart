@@ -551,7 +551,7 @@ class _HomeMainScreenState extends ConsumerState<HomeMainScreen> {
                                                 child: IconStatRing(
                                                   totalBalance:
                                                       calculatedBalance,
-                                                  spentPercentage:
+                                                  percentage:
                                                       spentPercentage,
                                                   iconData: Icons.bar_chart,
                                                   iconColor:

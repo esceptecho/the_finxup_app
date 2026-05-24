@@ -85,7 +85,7 @@ class _ShimmerBorderWrapperState extends State<ShimmerBorderWrapper>
                   shimmerColor: widget.shimmerColor, // Pasamos el color
                 )
               : null, // No dibuja nada si no está animando
-          child: Padding(padding: const EdgeInsets.all(12.0), child: child),
+          child: Padding(padding: const EdgeInsets.all(0.0), child: child),
         );
       },
       child: widget.child,

@@ -285,7 +285,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               ),
 
               // 2. Bloques Condicionales de Bienvenida
-              if (_welcomeVdeoCardShown) _buildVdeoWelcomeCard(),
+              if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               const SliverToBoxAdapter(child: FinancialHealthCard()),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -498,7 +498,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   }
 
   // --- COMPONENTES CONDICIONALES DE BIENVENIDA ---
-  Widget _buildVdeoWelcomeCard() {
+  Widget _buildVideoWelcomeCard() {
     String video = getRandomWelcomeVideo();
     return SliverToBoxAdapter(
       child: Container(
@@ -539,48 +539,6 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
       ),
     );
   }
-
-  // Widget _buildExpansionButton(bool isExpanded) {
-  //   return TextButton.icon(
-  //     onPressed: () => ref.read(listProvider.notifier).toggleExpansion(),
-  //     icon: Icon(
-  //       isExpanded ? Icons.expand_less : Icons.expand_more,
-  //       color: AppThemeHSL.textDisabled,
-  //     ),
-  //     label: Text(
-  //       isExpanded ? "Mostrar menos" : "Ver últimas transacciones",
-  //       style: TextStyle(color: AppThemeHSL.textDisabled, fontSize: 16),
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildFAB(double percentage) {
-  //   return FloatingActionButton(
-  //     mini: true,
-  //     onPressed: () => _showAddCardModal(context),
-  //     backgroundColor: AppThemeHSL.primaryExtraLight,
-  //     elevation: 4,
-  //     heroTag: percentage,
-  //     enableFeedback: true,
-  //     child: Icon(Icons.add, color: AppThemeHSL.textPrimary),
-  //   );
-  // }
-
-  // void _showAddCardModal(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     isScrollControlled: true,
-  //     backgroundColor: Colors.transparent,
-  //     builder: (context) => AddTransactionForm(
-  //       isBillMode: !_isShowingTransactions,
-  //       onAdd: (newTx) async => await ref
-  //           .read(transactionListNotifierProvider.notifier)
-  //           .addTransaction(newTx),
-  //       onAddBill: (newBill) =>
-  //           ref.read(billListNotifierProvider.notifier).add(newBill),
-  //     ),
-  //   );
-  // }
 
   Widget _buildEmptyGoalsPlaceholder() {
     return Container(
@@ -779,7 +737,7 @@ class HomeHeaderBackground extends StatelessWidget {
         image: DecorationImage(
           colorFilter: ColorFilter.mode(
             AppThemeHSL.divider,
-            BlendMode.modulate,
+            BlendMode.hardLight,
           ),
           image: const AssetImage('assets/fondo_degradado_login.png'),
           fit: BoxFit.cover,
@@ -799,7 +757,7 @@ class HomeHeaderBackground extends StatelessWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -809,7 +767,7 @@ class HomeHeaderBackground extends StatelessWidget {
                 flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Text(
                       'Balance Total',
@@ -839,44 +797,17 @@ class HomeHeaderBackground extends StatelessWidget {
                         ),
                       ),
                     ),
-
-                    // const SizedBox(height: 12),
-                    // _buildFinancialRow(
-                    //   Icons.arrow_upward_rounded,
-                    //   AppThemeHSL.incomeLight,
-                    //   income,
-                    // ),
-                    // _buildFinancialRow(
-                    //   Icons.arrow_downward_rounded,
-                    //   AppThemeHSL.expense,
-                    //   expense,
-                    // ),
                     const SizedBox(height: 24),
                     ShimmerBorderWrapper(
                       strokeWidth: 0.5,
                       isAnimating: true,
-                      repeat: true,
-                      shimmerColor: balance > 0
-                          ? AppThemeHSL.incomeLight
-                          : AppThemeHSL.expenseLight,
+                      repeat: false,
+                      shimmerColor: Colors.transparent,
+                      // balance > 0
+                      //     ? AppThemeHSL.incomeLight
+                      //     : AppThemeHSL.expenseLight,
                       child: Movimientos(),
                     ),
-                    // AnimatedTextKit(
-                    //   animatedTexts: [
-                    //     TypewriterAnimatedText(
-                    //       "${(spentPercentage * 100).toInt()}% gastado del límite",
-                    //       textStyle: TextStyle(
-                    //         color: AppThemeHSL.textSecondary.withValues(
-                    //           alpha: 0.9,
-                    //         ),
-                    //         fontSize: 16,
-                    //         fontWeight: FontWeight.w400,
-                    //       ),
-                    //       speed: const Duration(milliseconds: 100),
-                    //     ),
-                    //   ],
-                    //   isRepeatingAnimation: false,
-                    // ),
                   ],
                 ),
               ),
@@ -888,7 +819,7 @@ class HomeHeaderBackground extends StatelessWidget {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(40),
+                      borderRadius: BorderRadius.circular(7),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -908,7 +839,10 @@ class HomeHeaderBackground extends StatelessWidget {
                           strokeWidth: 0.2,
                           isAnimating: true,
                           repeat: false,
-                          shimmerColor: AppThemeHSL.textPrimary,
+                          shimmerColor: Colors.transparent,
+                          // balance > 0
+                          //     ? AppThemeHSL.incomeLight
+                          //     : AppThemeHSL.expenseLight,
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
@@ -919,7 +853,7 @@ class HomeHeaderBackground extends StatelessWidget {
                                 width: 80,
                                 child: IconStatRing(
                                   totalBalance: balance,
-                                  spentPercentage: spentPercentage,
+                                  percentage: spentPercentage,
                                   iconData: Icons.bar_chart,
                                   iconColor: AppThemeHSL.textSecondary,
                                 ),

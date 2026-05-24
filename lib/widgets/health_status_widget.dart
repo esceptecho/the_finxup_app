@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
+import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/finance_health_detail_sheet.dart';
 
 class FinancialHealthCard extends ConsumerWidget {
@@ -49,7 +50,8 @@ class FinancialHealthCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(7),
                   // Creamos un fondo con un degradado sutil usando el color del badge
                   gradient: LinearGradient(
-                    colors: [health.badgeColor.withValues(alpha: 0.15), Colors.white],
+                    colors: [health.badgeColor.withValues(alpha: 0.15), AppThemeHSL.incomeDark,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -85,7 +87,7 @@ class FinancialHealthCard extends ConsumerWidget {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.white70,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -93,7 +95,7 @@ class FinancialHealthCard extends ConsumerWidget {
                             "Índice de Salud: ${score.toStringAsFixed(0)} pts",
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.black54,
+                              color: Colors.white70,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -102,7 +104,7 @@ class FinancialHealthCard extends ConsumerWidget {
                     ),
               
                     // Un indicador visual extra o flecha por si quieren ver el desglose
-                    const Icon(Icons.chevron_right, color: Colors.black26),
+                    const Icon(Icons.chevron_right, color: Colors.white70),
                   ],
                 ),
               ),

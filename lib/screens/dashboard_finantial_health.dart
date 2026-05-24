@@ -182,7 +182,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(7),
         boxShadow: [
           BoxShadow(
             color:
@@ -213,12 +213,13 @@ class DashboardFinancialHealth extends ConsumerWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: .min,
               children: [
                 Text(
-                  "Índice de Salud Financiera",
+                  "Indice de Salud Financiera",
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 16,
@@ -262,7 +263,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
                     color: Colors.black.withValues(
                       alpha: 0.3,
                     ), // Un fondo ligeramente oscuro para contrastar cualquier color de texto
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(7),
                     border: Border.all(
                       color: healthProfile.badgeColor.withValues(alpha: 0.4),
                       width: 1,
@@ -315,7 +316,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
           elevation: 2,
           shadowColor: Colors.black12,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(7),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
@@ -358,7 +359,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
   Widget _buildNotificationTile(dynamic notification, BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
       elevation: 1,
       child: ListTile(
         leading: Icon(notification.icon, color: notification.color),
@@ -381,7 +382,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(7),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: const Row(
