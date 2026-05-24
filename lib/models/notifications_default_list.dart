@@ -1,0 +1,98 @@
+final List<Map<String, dynamic>> notifications = [
+      {
+        'title': 'Factura',
+        'desc': 'Vence mañana',
+        'type': 'warning',
+        'h': 140.0,
+      },
+      {
+        'title': 'Pago',
+        'desc': 'Recibido con éxito',
+        'type': 'success',
+        'h': 160.0,
+      },
+      {
+        'title': 'Soporte',
+        'desc': 'Ticket respondido',
+        'type': 'info',
+        'h': 190.0,
+      },
+      {
+        'title': 'Seguridad',
+        'desc': 'Login nuevo',
+        'type': 'error',
+        'h': 150.0,
+      },
+      {
+        'title': 'Meta',
+        'desc': 'Ahorro alcanzado',
+        'type': 'success',
+        'h': 170.0,
+      },
+      {
+        'title': 'Update',
+        'desc': 'Versión 2.0 lista',
+        'type': 'info',
+        'h': 130.0,
+      },
+      {
+        'title': 'Alerta',
+        'desc': 'Actividad sospechosa',
+        'type': 'error',
+        'h': 180.0,
+      },
+      {
+        'title': 'Recordatorio',
+        'desc': 'Revisión mensual',
+        'type': 'warning',
+        'h': 160.0,
+      },
+      {
+        'title': 'Promoción',
+        'desc': 'Descuento del 20%',
+        'type': 'success',
+        'h': 140.0,
+      },
+      {
+        'title': 'Encuesta',
+        'desc': 'Tu opinión importa',
+        'type': 'info',
+        'h': 150.0,
+      },
+      {
+        'title': 'Alerta',
+        'desc': 'Intento de acceso',
+        'type': 'error',
+        'h': 170.0,
+      },
+      {
+        'title': 'Recordatorio',
+        'desc': 'Pago próximo',
+        'type': 'warning',
+        'h': 160.0,
+      },
+      {
+        'title': 'Meta',
+        'desc': 'Nuevo objetivo establecido',
+        'type': 'success',
+        'h': 150.0,
+      },
+      {
+        'title': 'Update',
+        'desc': 'Mantenimiento programado',
+        'type': 'info',
+        'h': 130.0,
+      },
+      {
+        'title': 'Alerta',
+        'desc': 'Actividad inusual detectada',
+        'type': 'error',
+        'h': 180.0,
+      },
+      {
+        'title': 'Recordatorio',
+        'desc': 'Revisión trimestral',
+        'type': 'warning',
+        'h': 160.0,
+      },
+    ];
