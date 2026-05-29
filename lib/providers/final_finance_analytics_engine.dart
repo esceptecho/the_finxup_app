@@ -79,16 +79,107 @@ class FinanceAnalyticsEngine {
       ExpenseSubCategory.insurance,
     };
 
-    final positiveIncomeCategories = {IncomeSubCategory.investment};
+    // Ingresos pasivos (sin trabajo activo)
+    final passiveIncomeCategories = {
+      IncomeSubCategory.investment,
+      IncomeSubCategory.dividend,
+      IncomeSubCategory.interest,
+      IncomeSubCategory.rental,
+      IncomeSubCategory.royalties,
+      IncomeSubCategory.cashback,
+      IncomeSubCategory.rewards,
+      IncomeSubCategory.refund,
+      IncomeSubCategory.taxReturns,
+      IncomeSubCategory.inheritance,
+    };
+    // Ingresos activos adicionales (fuera del salario base)
+    final activeExtraIncomeCategories = {
+      IncomeSubCategory.bonus,
+      IncomeSubCategory.commission,
+      IncomeSubCategory.overtime,
+      IncomeSubCategory.tips,
+      IncomeSubCategory.freelance,
+      IncomeSubCategory.sales,
+      IncomeSubCategory.prize,
+      IncomeSubCategory.gift,
+      IncomeSubCategory.alimony,
+      IncomeSubCategory.pension,
+    };
+
+    // Unificar todos los positivos
+    final positiveIncomeCategories = {
+      ...passiveIncomeCategories,
+      ...activeExtraIncomeCategories,
+    };
+
+    // final lifestyleCategories = { // usar con contains
+    //   ExpenseSubCategory.leisure,
+    //   ExpenseSubCategory.entertainment,
+    //   ExpenseSubCategory.coffee,
+    //   ExpenseSubCategory.snacks,
+    //   ExpenseSubCategory.delivery,
+    //   ExpenseSubCategory.shopping,
+    //   ExpenseSubCategory.travel,
+    // };
 
     final lifestyleCategories = {
-      ExpenseSubCategory.leisure,
-      ExpenseSubCategory.entertainment,
-      ExpenseSubCategory.coffee,
-      ExpenseSubCategory.snacks,
-      ExpenseSubCategory.delivery,
-      ExpenseSubCategory.shopping,
-      ExpenseSubCategory.travel,
+      // Ocio y entretenimiento
+      ExpenseSubCategory.leisure: 'Ocio/Entretenimiento',
+      ExpenseSubCategory.entertainment: 'Ocio/Entretenimiento',
+      ExpenseSubCategory.online: 'Ocio/Entretenimiento',
+      ExpenseSubCategory.subscription: 'Ocio/Entretenimiento',
+
+      // Comidas y bebidas fuera de casa o rápidas
+      ExpenseSubCategory.coffee: 'Cafecitos',
+      ExpenseSubCategory.snacks: 'Antojos/Snacks',
+      ExpenseSubCategory.delivery: 'Delivery',
+      ExpenseSubCategory.food: 'Comidas fuera',
+
+      // Compras personales
+      ExpenseSubCategory.shopping: 'Compras/Caprichos',
+      ExpenseSubCategory.clothing: 'Compras/Caprichos',
+      ExpenseSubCategory.electronics: 'Compras/Caprichos',
+      ExpenseSubCategory.impulsive: 'Compras/Caprichos',
+      ExpenseSubCategory.gifts: 'Regalos',
+
+      // Viajes y movilidad
+      ExpenseSubCategory.travel: 'Viajes',
+      ExpenseSubCategory.transport: 'Transporte',
+      ExpenseSubCategory.tolls: 'Peajes',
+      ExpenseSubCategory.parking: 'Estacionamiento',
+
+      // Salud y bienestar
+      ExpenseSubCategory.gym: 'Salud/Bienestar',
+      ExpenseSubCategory.health: 'Salud/Bienestar',
+      ExpenseSubCategory.beauty: 'Salud/Bienestar',
+
+      // Hogar y servicios
+      ExpenseSubCategory.rent: 'Hogar/Alquiler',
+      ExpenseSubCategory.services: 'Servicios',
+      ExpenseSubCategory.repairs: 'Reparaciones',
+      ExpenseSubCategory.homeImprovement: 'Mejoras del hogar',
+
+      // Mascotas
+      ExpenseSubCategory.pets: 'Mascotas',
+
+      // Niños
+      ExpenseSubCategory.kids: 'Hijos',
+
+      // Educación
+      ExpenseSubCategory.education: 'Educación',
+
+      // Financieros
+      ExpenseSubCategory.insurance: 'Seguros',
+      ExpenseSubCategory.interest: 'Intereses',
+      ExpenseSubCategory.taxes: 'Impuestos',
+
+      // Ahorros
+      ExpenseSubCategory.savings: 'Ahorro',
+
+      // Otros
+      ExpenseSubCategory.charity: 'Donaciones',
+      ExpenseSubCategory.offerings: 'Ofrendas/Donaciones',
+      ExpenseSubCategory.others: 'Otros',
     };
 
     double positiveHabits = 0.0;
@@ -104,7 +195,7 @@ class FinanceAnalyticsEngine {
       } else if (t.type == TransactionType.expense) {
         if (positiveExpenseCategories.contains(t.subCategory)) {
           positiveHabits += t.amount;
-        } else if (lifestyleCategories.contains(t.subCategory)) {
+        } else if (lifestyleCategories.containsKey(t.subCategory)) {
           totalLifestyleSpend += t.amount;
         } else if (t.subCategory == ExpenseSubCategory.impulsive ||
             t.subCategory == ExpenseSubCategory.interest ||
@@ -214,6 +305,86 @@ class FinanceAnalyticsEngine {
         advice:
             "¡Frena el coche! Estás destinando demasiado a la gratificación instantánea.",
         statusColor: "red",
+      );
+    }
+  }
+
+
+  LifestyleProfile getLifestyleLevelLottie() {
+    final lifestyleCategories = {
+      ExpenseSubCategory.leisure,
+      ExpenseSubCategory.entertainment,
+      ExpenseSubCategory.coffee,
+      ExpenseSubCategory.snacks,
+      ExpenseSubCategory.delivery,
+      ExpenseSubCategory.travel,
+      ExpenseSubCategory.shopping,
+    };
+
+    double funSpend = transactions
+        .where(
+          (t) =>
+              t.type == TransactionType.expense &&
+              lifestyleCategories.contains(t.subCategory),
+        )
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    if (funSpend <= 50) {
+      return LifestyleProfile(
+        name: "Monje Financiero",
+        message: "Tu nivel de gasto en ocio es casi inexistente.",
+        advice:
+            "¡Excelente capacidad de ahorro! Pero recuerda disfrutar de vez en cuando.",
+        statusColor: "blue",
+        lottieAsset: "assets/lotties/Fireworks.json",
+        loopLottie: true, // Se reproduce una vez
+        lottieHeight: 150,
+        
+      );
+    } else if (funSpend <= 150) {
+      return LifestyleProfile(
+        name: "Ahorrador Consciente",
+        message: "Mantienes tus antojos y salidas bajo un control estricto.",
+        advice: "Estás priorizando tu futuro sin privación extrema. Sigue así.",
+        statusColor: "green",
+        lottieAsset: "assets/lotties/Man_flyingairplane.json",
+        loopLottie: true, // Se reproduce una vez
+        lottieHeight: 150,
+      );
+    } else if (funSpend <= 350) {
+      return LifestyleProfile(
+        name: "Estilo de Vida Balanceado",
+        message:
+            "Disfrutas de la vida, el café y las salidas de forma moderada.",
+        advice:
+            "Tienes un equilibrio sano. Asegura que tu ahorro mensual sea igual o superior.",
+        statusColor: "teal",
+        lottieAsset: "assets/lotties/Financial_charts_statistics.json",
+        loopLottie: false, // Se reproduce una vez
+        lottieHeight: 150,
+      );
+    } else if (funSpend <= 600) {
+      return LifestyleProfile(
+        name: "Explorador del Confort",
+        message:
+            "El delivery, las compras y el entretenimiento cobran protagonismo.",
+        advice:
+            "Ojo con los gastos hormiga. Recorta un 15% en snacks y tu cuenta lo agradecerá.",
+        statusColor: "orange",
+        lottieAsset: "assets/lotties/wallet.json",
+        loopLottie: false, // Se reproduce una vez
+        lottieHeight: 150,
+      );
+    } else {
+      return LifestyleProfile(
+        name: "Vividor (Alerta Roja)",
+        message: "Estás viviendo al límite o dándote una vida de rockstar.",
+        advice:
+            "¡Frena el coche! Estás destinando demasiado a la gratificación instantánea.",
+        statusColor: "red",
+        lottieAsset: "assets/lotties/warning_pulse.json",
+        loopLottie: false, // Se reproduce una vez
+        lottieHeight: 150,
       );
     }
   }

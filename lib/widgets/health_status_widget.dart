@@ -25,7 +25,7 @@ class FinancialHealthCard extends ConsumerWidget {
         final score = engine.getFinancialHealthIndex();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 0),
           child: Card(
             elevation: 3,
             shape: RoundedRectangleBorder(
@@ -91,14 +91,35 @@ class FinancialHealthCard extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            "Índice de Salud: ${score.toStringAsFixed(0)} pts",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
+                          Text.rich(
+                            TextSpan(
+                              text:
+                                  "Indice de Salud: ",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: score.toStringAsFixed(0),
+                                  style: TextStyle(
+                                    fontSize: 20, // Tamaño más pequeño
+                                    color: Colors.white, // Color diferente
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: "pts",
+                                  style: TextStyle(
+                                    fontSize: 12, // Tamaño más pequeño
+                                    color: Colors.white, // Color diferente
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),

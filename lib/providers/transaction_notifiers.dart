@@ -18,9 +18,41 @@ como cargar datos desde Hive o realizar operaciones CRUD.
 Este TransactionListNotifier se encargará de cargar la lista de transacciones. */
 
 final transactionListNotifierProvider =
-    AsyncNotifierProvider<TransactionListNotifier, List<Transaction>>(() { 
+    AsyncNotifierProvider<TransactionListNotifier, List<Transaction>>(() {
       return TransactionListNotifier();
     });
+
+// Provider derivado para el saldo total histórico
+final saldoTotalHistoricoProvider = Provider<double>((ref) {
+  final transactionsAsync = ref.watch(transactionListNotifierProvider);
+  
+  return transactionsAsync.when(
+    data: (transactions) {
+      final notifier = ref.read(transactionListNotifierProvider.notifier);
+      return notifier.calcularSaldoTotalHastaHoy(transactions);
+    },
+    loading: () => 0.0,
+    error: (_, _) => 0.0,
+  );
+});
+
+// Provider para calcular el histórico de una transacción específica
+final transaccionHistoricoProvider = Provider.family<double, String>((ref, transactionId) {
+  final transactionsAsync = ref.watch(transactionListNotifierProvider);
+  
+  return transactionsAsync.when(
+    data: (transactions) {
+      final transaction = transactions.firstWhere(
+        (t) => t.id == transactionId,
+        orElse: () => throw Exception('Transacción no encontrada'),
+      );
+      final notifier = ref.read(transactionListNotifierProvider.notifier);
+      return notifier.calcularTotalHistorico(transaction);
+    },
+    loading: () => 0.0,
+    error: (_, _) => 0.0,
+  );
+});    
 
 // Este AsyncNotifier se encargará de cargar la lista de transacciones y manejar las operaciones CRUD.
 class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
@@ -120,6 +152,20 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
         // El repositorio debería manejar la lógica de 'box.put(transaction.id, transaction)'
         await _repository.saveTransaction(transaction);
 
+        // ⚡ IMPORTANTE: Crear una copia de la lista de paths
+        final List<String> updatedPaths = List<String>.from(
+          transaction.attachmentPaths,
+        );
+        updatedPaths.add(savedPath);
+
+        // ⚡ IMPORTANTE: Crear una copia modificada de la transacción
+        final updatedTransaction = transaction.copyWith(
+          attachmentPaths: updatedPaths,
+        );
+
+        // Guardar la transacción actualizada
+        await _repository.saveTransaction(updatedTransaction);
+
         print('✅ NOTIFIER: Archivo guardado en $savedPath');
       }
 
@@ -130,6 +176,7 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
 
   // 1. El método para calcular el total de una sola transacción hasta hoy
   double calcularTotalHistorico(Transaction transaction) {
+    
     // Asumo que tu modelo tiene una propiedad como 'amount' o 'value'
     double valorDeTransaccion = transaction.amount;
 

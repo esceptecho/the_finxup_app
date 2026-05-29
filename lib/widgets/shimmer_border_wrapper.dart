@@ -16,7 +16,7 @@ class ShimmerBorderWrapper extends StatefulWidget {
     this.isAnimating = true,
     this.repeat = true,
     this.isCircular = false,
-    this.borderRadius = 16.0,
+    this.borderRadius = 7.0,
     this.strokeWidth = 2.0,
     this.shimmerColor = Colors.amberAccent, // Color por defecto
   });

@@ -27,7 +27,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
         if (engine.transactions.isEmpty) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(12.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -72,7 +72,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
           );
         }
         // Si hay datos, construimos la UI normal usando el engine
-        final healthIndex = engine.getFinancialHealthIndex();
+        // final healthIndex = engine.getFinancialHealthIndex(); // Parametro para _buildHealthScoreCard
         final liquidityDays = engine.predictDaysOfLiquidity();
 
         return SingleChildScrollView(
@@ -82,9 +82,9 @@ class DashboardFinancialHealth extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Tarjeta de score optimizada
-              _buildHealthScoreCard(healthIndex),
-              const SizedBox(height: 20),
-
+              // _buildHealthScoreCard(healthIndex),
+              // FinancialHealthCard(),
+              // const SizedBox(height: 20),
               _buildLiquidityCard(liquidityDays, context),
               const SizedBox(height: 24),
 
@@ -162,8 +162,6 @@ class DashboardFinancialHealth extends ConsumerWidget {
         );
       },
     );
-
-    
   } // FIN BUILD
 
   // --- WIDGETS DE APOYO REDISEÑADOS ---
@@ -315,9 +313,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
         child: Card(
           elevation: 2,
           shadowColor: Colors.black12,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(7),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
             child: ListTile(

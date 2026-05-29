@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
 import 'package:the_finxup_app/screens/enhanced_home_screen.dart';
+import 'package:the_finxup_app/screens/main_transactions_screen.dart';
 import 'package:the_finxup_app/screens/statistics_screen.dart';
 import 'package:the_finxup_app/screens/transaction_calendar_screen_state.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
@@ -46,6 +47,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           // 3. Definimos las pantallas aquí dentro, pasando la lista real
           final screens = [
             const EnhancedHomeScreen(),
+            const MainTransactionsScreenV3(),
             // const HomeMainScreen(),
             StatisticsScreen(transactions: transactions), // <--- Lista validada
             const DashboardScreen(),
@@ -78,6 +80,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_filled),
             label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.compare_arrows_rounded),
+            label: 'Transacciones',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),

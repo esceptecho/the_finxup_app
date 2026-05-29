@@ -20,7 +20,7 @@ class LiquidityChart extends StatelessWidget {
     final String startDateStr = DateFormat('dd MMM').format(today);
     final String endDateStr = daysLeft > 0
         ? DateFormat('dd MMM').format(bankruptcyDate)
-        : "N/A";
+        : "Sin salgo positivo";
         
     // Generamos los puntos de la curva f(t) = at² + bt + c
     List<FlSpot> spots = _generateProjectionSpots();

@@ -141,54 +141,40 @@ class _ConsumerTransactionsScreenState
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF161B22),
-        elevation: 0,
-        title: const Text(
-          'Mis Finanzas',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      body: Column(
+        children: [
+          const SizedBox(height: 8),
+          // Tarjeta de resumen
+          _buildSummaryCard(
+            balance: summary.balance,
+            income: summary.income,
+            expense: summary.expense,
+            percentage: summary.percentage,
           ),
-        ),
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            // Tarjeta de resumen
-            _buildSummaryCard(
-              balance: summary.balance,
-              income: summary.income,
-              expense: summary.expense,
-              percentage: summary.percentage,
-            ),
-            const SizedBox(height: 24),
-            // Selector de categorías
-            ConsumerCategoryFilterSelector(
-              selectedCategory: _selectedCategory,
-              onCategoryChanged: _onCategoryChanged,
-            ),
-            const SizedBox(height: 16),
-            // Lista de items
-            Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: _buildItemsList(
-                  isShowingTransactions: _isShowingTransactions,
-                  transactions: transactions,
-                  bills: billsList,
-                ),
+          const SizedBox(height: 24),
+          // Selector de categorías
+          ConsumerCategoryFilterSelector(
+            selectedCategory: _selectedCategory,
+            onCategoryChanged: _onCategoryChanged,
+          ),
+          const SizedBox(height: 16),
+          // Lista de items
+          Expanded(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildItemsList(
+                isShowingTransactions: _isShowingTransactions,
+                transactions: transactions,
+                bills: billsList,
               ),
             ),
-            // if (_isShowingTransactions)
-            //   _buildExpansionButton(isExpanded),
-            // const SizedBox(height: 24),
-          ],
-        ),
+          ),
+          // if (_isShowingTransactions)
+          //   _buildExpansionButton(isExpanded),
+          // const SizedBox(height: 24),
+        ],
       ),
+      // ),
       floatingActionButton: _buildFAB(summary.percentage),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
@@ -295,7 +281,7 @@ class _ConsumerTransactionsScreenState
                 children: [
                   Expanded(
                     child: Text(
-                      CurrencyFormatter.formatAmount(balance), 
+                      CurrencyFormatter.formatAmount(balance),
                       style: TextStyle(
                         color: balance > 0
                             ? AppThemeHSL.incomeLight
@@ -463,7 +449,6 @@ class _ConsumerTransactionsScreenState
     required List<Transaction> transactions,
     required List<Bill> bills,
   }) {
-
     final items = isShowingTransactions ? transactions : bills;
 
     if (items.isEmpty) {
@@ -515,7 +500,7 @@ class _ConsumerTransactionsScreenState
           );
         }
         return null;
-      }
+      },
     );
   }
 }

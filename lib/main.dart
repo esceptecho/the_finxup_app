@@ -7,7 +7,6 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
-import 'package:the_finxup_app/screens/enhanced_home_screen.dart';
 import 'package:the_finxup_app/screens/login_screen.dart';
 import 'package:the_finxup_app/screens/main_screen.dart';
 import 'package:the_finxup_app/screens/onboardingScreens/onboarding_screen.dart';

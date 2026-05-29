@@ -12,11 +12,17 @@ import 'package:the_finxup_app/utils/permission_service.dart';
 class TransactionDetailScreen extends ConsumerWidget {
   final Transaction transaction;
 
-  const TransactionDetailScreen({super.key, required this.transaction});
+  const TransactionDetailScreen({super.key, 
+  required this.transaction
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // final listNotifier = ref.read(transactionListNotifierProvider.notifier);
+    // Observamos el valor histórico de esta transacción específica
+    final valorHistorico = ref.watch(
+      transaccionHistoricoProvider(transaction.id),
+    );
+
     // Determinamos si es gasto o ingreso para el color del monto
     final bool isIncome = transaction.type.toString().contains('income');
 
@@ -177,8 +183,8 @@ class TransactionDetailScreen extends ConsumerWidget {
                         _buildInfoSection(
                           label: "NOTAS / COMENTARIOS",
                           value: transaction.recurrenceAmount != 0.0
-                              ? "Valor de recurrencia en el tiempo: \$${transaction.recurrenceAmount}"
-                              : "Sin notas adicionales para esta transacción.",
+                              ? "Valor de recurrencia hasta hoy: \$${valorHistorico.toStringAsFixed(2)}\n\nValor total de recurrencia a un año: \$${transaction.recurrenceAmount}"
+                              : "No hay notas adicionales",
                           icon: Icons.notes,
                         ),
                         // const Divider(color: Colors.white10),

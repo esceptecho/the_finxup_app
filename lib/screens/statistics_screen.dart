@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
-import 'package:the_finxup_app/screens/transaction_history_view.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
 enum ChartPeriod { week, month, quarter, year }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/finance_logic_provider.dart';
 
 class FinancialHealthCard extends ConsumerWidget {
   const FinancialHealthCard({super.key});
@@ -34,7 +33,7 @@ class FinancialHealthCard extends ConsumerWidget {
               borderRadius: BorderRadius.circular(16),
               // Creamos un fondo con un degradado sutil usando el color del badge
               gradient: LinearGradient(
-                colors: [health.badgeColor.withOpacity(0.15), Colors.white],
+                colors: [health.badgeColor.withValues(alpha: 0.15), Colors.white],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -45,7 +44,7 @@ class FinancialHealthCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: health.badgeColor.withOpacity(0.2),
+                    color: health.badgeColor.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

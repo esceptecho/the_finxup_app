@@ -15,7 +15,7 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
         height: 200,
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const SizedBox(
+      error: (_, _) => const SizedBox(
         height: 200,
         child: Center(child: Text('Error al cargar detalles')),
       ),
@@ -25,12 +25,63 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
 
         // Categorías para mostrar en el desglose de "Gastos de Estilo de Vida"
         final lifestyleCategories = {
+          // Ocio y entretenimiento
           ExpenseSubCategory.leisure: 'Ocio/Entretenimiento',
+          ExpenseSubCategory.entertainment: 'Ocio/Entretenimiento',
+          ExpenseSubCategory.online: 'Ocio/Entretenimiento',
+          ExpenseSubCategory.subscription: 'Ocio/Entretenimiento',
+
+          // Comidas y bebidas fuera de casa o rápidas
           ExpenseSubCategory.coffee: 'Cafecitos',
           ExpenseSubCategory.snacks: 'Antojos/Snacks',
           ExpenseSubCategory.delivery: 'Delivery',
+          ExpenseSubCategory.food: 'Comidas fuera',
+
+          // Compras personales
           ExpenseSubCategory.shopping: 'Compras/Caprichos',
+          ExpenseSubCategory.clothing: 'Compras/Caprichos',
+          ExpenseSubCategory.electronics: 'Compras/Caprichos',
+          ExpenseSubCategory.impulsive: 'Compras/Caprichos',
+          ExpenseSubCategory.gifts: 'Regalos',
+
+          // Viajes y movilidad
           ExpenseSubCategory.travel: 'Viajes',
+          ExpenseSubCategory.transport: 'Transporte',
+          ExpenseSubCategory.tolls: 'Peajes',
+          ExpenseSubCategory.parking: 'Estacionamiento',
+
+          // Salud y bienestar
+          ExpenseSubCategory.gym: 'Salud/Bienestar',
+          ExpenseSubCategory.health: 'Salud/Bienestar',
+          ExpenseSubCategory.beauty: 'Salud/Bienestar',
+
+          // Hogar y servicios
+          ExpenseSubCategory.rent: 'Hogar/Alquiler',
+          ExpenseSubCategory.services: 'Servicios',
+          ExpenseSubCategory.repairs: 'Reparaciones',
+          ExpenseSubCategory.homeImprovement: 'Mejoras del hogar',
+
+          // Mascotas
+          ExpenseSubCategory.pets: 'Mascotas',
+
+          // Niños
+          ExpenseSubCategory.kids: 'Hijos',
+
+          // Educación
+          ExpenseSubCategory.education: 'Educación',
+
+          // Financieros
+          ExpenseSubCategory.insurance: 'Seguros',
+          ExpenseSubCategory.interest: 'Intereses',
+          ExpenseSubCategory.taxes: 'Impuestos',
+
+          // Ahorros
+          ExpenseSubCategory.savings: 'Ahorro',
+
+          // Otros
+          ExpenseSubCategory.charity: 'Donaciones',
+          ExpenseSubCategory.offerings: 'Ofrendas/Donaciones',
+          ExpenseSubCategory.others: 'Otros',
         };
 
         return Padding(
@@ -117,7 +168,7 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
                         entry.value,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.black87,
+                          color: Colors.white70,
                         ),
                       ),
                       Text(
@@ -192,7 +243,7 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.amber.withOpacity(0.15),
+          color: Colors.amber.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.amber[700]!, width: 0.5),
         ),
@@ -218,7 +269,7 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: Colors.green.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Row(

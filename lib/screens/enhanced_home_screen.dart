@@ -25,7 +25,6 @@ import 'package:the_finxup_app/widgets/category_filter_selector.dart';
 import 'package:the_finxup_app/widgets/colorize_names_widget.dart';
 import 'package:the_finxup_app/widgets/elegant_banner.dart';
 import 'package:the_finxup_app/widgets/goals_section.dart';
-import 'package:the_finxup_app/widgets/health_status_widget.dart';
 import 'package:the_finxup_app/widgets/icon_stat_ring.dart';
 import 'package:the_finxup_app/widgets/movimientos.dart';
 import 'package:the_finxup_app/widgets/shimmer_border_wrapper.dart';
@@ -33,6 +32,7 @@ import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/summary_card.dart';
 import 'package:the_finxup_app/widgets/transaction_card.dart';
 import 'package:the_finxup_app/widgets/video_welcome_card.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
 class EnhancedHomeScreen extends ConsumerStatefulWidget {
   const EnhancedHomeScreen({super.key});
@@ -286,8 +286,50 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
               // 2. Bloques Condicionales de Bienvenida
               if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              const SliverToBoxAdapter(child: FinancialHealthCard()),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              // const SliverToBoxAdapter(child: FinancialHealthCard()),
+              // const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              if (_welcomeSummaryCardShown) ...[
+                // mover aqui para condicionar
+              ],
+              // if (isSumaryVisible)
+              // if (_welcomeSummaryCardShown)
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              // if (isSumaryVisible)
+              // if (_welcomeSummaryCardShown)
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.only(top: 16),
+                  color: AppThemeHSL.surfaceLight,
+                  child: Stack(
+                    alignment: .centerLeft,
+                    children: [
+                      Column(
+                        crossAxisAlignment: .start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16.0),
+                            child: Text(
+                              "Salud Financiera",
+                              style: TextStyle(
+                                color: AppThemeHSL.textPrimary,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                          DashboardFinancialHealth(),
+                        ],
+                      ),
+                      // ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              _buildSummaryCard(),
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
               // 3. Sección de Metas
               SliverToBoxAdapter(
@@ -306,92 +348,65 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                     : _buildEmptyGoalsPlaceholder(),
               ),
 
-              if (_welcomeSummaryCardShown) ...[
-                // mover aqui para condicionar
-              ],
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              _buildSummaryCard(),
+              // const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              // // 4. Filtros y Listados dinámicos
+              // if (transactionList.isNotEmpty || billsList.isNotEmpty) ...[
+              //   SliverToBoxAdapter(
+              //     child: Divider(height: 16.0, color: AppThemeHSL.divider),
+              //   ),
+              //   const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              //   SliverToBoxAdapter(
+              //     child: CategoryFilterSelector(
+              //       showTransactions: _isShowingTransactions,
+              //       onChanged: (val) =>
+              //           setState(() => _isShowingTransactions = val),
+              //     ),
+              //   ),
 
-              // if (isSumaryVisible)
-              // if (_welcomeSummaryCardShown)
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              // if (isSumaryVisible)
-              // if (_welcomeSummaryCardShown)
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 12),
-                  padding: EdgeInsets.only(top: 16),
-                  color: AppThemeHSL.surfaceLight,
-                  child: Stack(
-                    alignment: .centerLeft,
-                    children: [
-                      Column(
-                        children: [
-                          Text(
-                            "Salud Financiera",
-                            style: TextStyle(
-                              color: AppThemeHSL.textPrimary,
-                              fontSize: 18,
-                            ),
-                          ),
-                          DashboardFinancialHealth(),
-                        ],
-                      ),
-                      Positioned(
-                        bottom: 15,
-                        right: 20,
-                        child: TextButton(
-                          autofocus: true,
-                          //iconSize: 20,
-                          child: Text(
-                            'Cerrar',
-                            style: TextStyle(color: AppThemeHSL.textSecondary),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              isSumaryVisible = !isSumaryVisible;
-                            });
-                          },
+              //   // const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              //   _buildSliverList(
+              //     isShowingTransactions: _isShowingTransactions,
+              //     transactions: transactionList,
+              //     bills: billsList,
+              //   ),
+              // ],
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  return VisibilityDetector(
+                    key: Key('item-$index'),
+                    onVisibilityChanged: (info) {
+                      if (info.visibleFraction > 0.3) {
+                        print(
+                          'Item $index visible en ${(info.visibleFraction * 100).toStringAsFixed(0)}%',
+                        );
+                        // Activar Lottie, reproducir video, etc.
+                      }
+                    },
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          print(
+                            'Item $index was clicked',
+                          );
+                        },
+                        splashColor: Colors.white.withValues(alpha: 0.2),
+                        child: Container(
+                          height: 150,
+                          margin: EdgeInsets.all(8),
+                          color:
+                              Colors.primaries[index % Colors.primaries.length],
+                          child: Center(child: Text('Item $index')),
                         ),
                       ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                }, childCount: 50),
               ),
 
-              // 4. Filtros y Listados dinámicos
-              if (transactionList.isNotEmpty || billsList.isNotEmpty) ...[
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                const SliverToBoxAdapter(
-                  child: Center(
-                    child: SizedBox(
-                      height: 24,
-                      child: Text(
-                        'Movimientos Recientes',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                SliverToBoxAdapter(
-                  child: CategoryFilterSelector(
-                    showTransactions: _isShowingTransactions,
-                    onChanged: (val) =>
-                        setState(() => _isShowingTransactions = val),
-                  ),
-                ),
-
-                // const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                _buildSliverList(
-                  isShowingTransactions: _isShowingTransactions,
-                  transactions: transactionList,
-                  bills: billsList,
-                ),
-              ],
-
               // 5. Botón expandible de transacciones
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
           ),
         );
@@ -531,10 +546,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
           color: AppThemeHSL.background,
           borderRadius: BorderRadius.circular(7),
         ),
-        child: SummaryCard(
-          userName: 'Arees',
-          onCloseTap: () => setState(() => _welcomeSummaryCardShown = false),
-          onDetailsTap: () => Navigator.pushNamed(context, '/analytics'),
+        child: ShimmerBorderWrapper(
+          strokeWidth: 2.0,
+          isAnimating: true,
+          repeat: false,
+          shimmerColor: AppThemeHSL.incomeDark,
+          child: SummaryCard(
+            userName: 'Arees',
+            onCloseTap: () => setState(() => _welcomeSummaryCardShown = false),
+            onDetailsTap: () {},
+          ),
         ),
       ),
     );
@@ -882,25 +903,6 @@ class HomeHeaderBackground extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFinancialRow(IconData icon, Color color, double amount) {
-    return SizedBox(
-      width: double.infinity,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(width: 4),
-            Text(
-              CurrencyFormatter.formatAmount(amount),
-              style: TextStyle(color: color, fontWeight: FontWeight.w300),
-            ),
-          ],
         ),
       ),
     );
