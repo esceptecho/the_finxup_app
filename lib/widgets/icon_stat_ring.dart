@@ -81,7 +81,7 @@ class IconStatRing extends StatelessWidget {
                   return CircularProgressIndicator(
                     value: value,
                     strokeWidth: strokeWidth,
-                    backgroundColor: trackColor,
+                    backgroundColor: Colors.white10,//trackColor,
                     color: progressColor,
                     strokeCap: StrokeCap.round,
                   );
@@ -96,13 +96,13 @@ class IconStatRing extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: Theme.of(
                   context,
-                ).scaffoldBackgroundColor.withValues(alpha: 0.1),
+                ).scaffoldBackgroundColor.withValues(alpha: 0.5),
               ),
               child: Icon(
                 _getDynamicIcon(),
                 size: iconSize,
                 color: dynamicIconColor,
-              ), 
+              ),
             ),
 
             // Indicador de porcentaje en el centro (opcional pero útil)
@@ -134,6 +134,5 @@ class IconStatRing extends StatelessWidget {
     } else {
       return Icons.trending_down_rounded;
     }
-  
   }
 }

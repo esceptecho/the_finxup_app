@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
 import 'package:the_finxup_app/models/bill.dart';
@@ -285,8 +286,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               ),
 
               // 2. Bloques Condicionales de Bienvenida
-              if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
+              if (_welcomeVdeoCardShown) 
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
 
               // const SliverToBoxAdapter(child: FinancialHealthCard()),
               // const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -370,7 +372,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               //     bills: billsList,
               //   ),
               // ],
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
                   return VisibilityDetector(
@@ -387,17 +389,27 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {
-                          print(
-                            'Item $index was clicked',
-                          );
+                          print('Item $index was clicked');
                         },
                         splashColor: Colors.white.withValues(alpha: 0.2),
-                        child: Container(
-                          height: 150,
-                          margin: EdgeInsets.all(8),
-                          color:
-                              Colors.primaries[index % Colors.primaries.length],
-                          child: Center(child: Text('Item $index')),
+                        child: SlidableItem(
+                          onDelete: () {},
+                          onToggleStatus: () {},
+                          child: Container(
+                            height: 150,
+                            margin: EdgeInsets.all(8),
+                            color: Colors
+                                .primaries[index % Colors.primaries.length],
+                            child: Center(
+                              child: Text(
+                                'Item $index',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: .w800,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
