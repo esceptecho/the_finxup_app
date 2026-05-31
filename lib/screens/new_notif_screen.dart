@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:the_finxup_app/models/app_notification.dart';
 import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
@@ -8,11 +9,19 @@ import 'package:the_finxup_app/theme/app_themeHSL.dart';
 // ==========================================
 
 class NewNotifScreen extends ConsumerWidget {
-  const NewNotifScreen({super.key});
+  // 1. Agregamos el parámetro opcional al constructor
+  final AppNotification? notification;
+
+  const NewNotifScreen({super.key, this.notification});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Obtenemos la lista ya filtrada reactivamente
+    // 2. SI VIENE UNA NOTIFICACIÓN, CONSTUIMOS LA VISTA DE DETALLE
+    if (notification != null) {
+      return _buildDetailView(context, ref, notification!);
+    }
+
+    // 3. SI NO VIENE, MOSTRAMOS TU LISTA ORIGINAL
     final appNotifications = ref.watch(notificationsProvider);
 
     return Scaffold(
@@ -20,10 +29,17 @@ class NewNotifScreen extends ConsumerWidget {
         title: const Text('Notificaciones'),
         centerTitle: true,
         actions: [
-          Positioned(
-            child: Chip(
-              label: Text('${appNotifications.length}', style: TextStyle(color: AppThemeHSL.backgroundDeep),),
-              backgroundColor: Colors.teal[100],
+          // Corrección: Eliminado 'Positioned' (no permitido aquí) y envuelto en Center
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Chip(
+                label: Text(
+                  '${appNotifications.length}',
+                  style: TextStyle(color: AppThemeHSL.backgroundDeep),
+                ),
+                backgroundColor: Colors.teal[100],
+              ),
             ),
           ),
         ],
@@ -40,7 +56,6 @@ class NewNotifScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- AQUÍ SE OBTIENEN DIRECTAMENTE SIN LISTVIEW.BUILDER ---
                   for (final notif in appNotifications) ...[
                     Card(
                       elevation: 2,
@@ -61,15 +76,12 @@ class NewNotifScreen extends ConsumerWidget {
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(notif.message),
-
-                        // Botón de acción directa para eliminar/descartar la notificación
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.check_circle_outline,
                             color: Colors.green,
                           ),
                           onPressed: () {
-                            // Pasas directamente el ID de la notificación que tienes en el ciclo 'for'
                             ref
                                 .read(dismissedNotificationsProvider.notifier)
                                 .dismiss(notif.id);
@@ -81,6 +93,84 @@ class NewNotifScreen extends ConsumerWidget {
                 ],
               ),
             ),
+    );
+  }
+
+  /// --- VISTA DE DETALLE PARA UNA NOTIFICACIÓN INDIVIDUAL ---
+  Widget _buildDetailView(
+    BuildContext context,
+    WidgetRef ref,
+    AppNotification notif,
+  ) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalle de Notificación'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(height: 80,),
+            // Icono o Imagen grande
+            Center(
+              child: Container(
+                padding: EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: notif.color.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(7)
+                ),
+                child: Icon(notif.icon, size: 80,),
+                ),
+            ),
+            const SizedBox(height: 24),
+            // Título
+            Text(
+              notif.title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            // Mensaje completo
+            Text(
+              notif.message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[700],
+                height: 1.5,
+              ),
+            ),
+            const Spacer(),
+            // Botón de acción para marcar como leída desde el detalle
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.check_circle),
+              label: const Text(
+                'Marcar como leída y volver',
+                style: TextStyle(fontSize: 16),
+              ),
+              onPressed: () {
+                // 1. La marcamos como leída
+                ref
+                    .read(dismissedNotificationsProvider.notifier)
+                    .dismiss(notif.id);
+                // 2. Regresamos a la pantalla anterior
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

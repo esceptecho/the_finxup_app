@@ -17,6 +17,7 @@ import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/screens/dashboard_finantial_health.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
 import 'package:the_finxup_app/screens/new_tolerance_calculator_screen.dart';
+import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
 import 'package:the_finxup_app/screens/statistics_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
@@ -49,6 +50,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   bool _isGoalsVisible = true;
   bool _welcomeSummaryCardShown = false;
   bool _welcomeVdeoCardShown = false;
+  bool _showNotificationBanner = false;
   static const int _hoursThreshold = 6; //Ajustar horas a voluntad
   static const int _hoursVideoThreshold = 3; //Ajustar horas a voluntad
 
@@ -254,14 +256,32 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     );
   }
 
+  void _showNotifBanner(List<AppNotification> notifications) {
+    ElegantBanner.show(
+      context, // El context va de primero según la firma original
+      ref: ref,
+      appNotifications: notifications,
+      customBackgroundColor: AppThemeHSL.surfaceLight,
+      customTextColor: Colors.purple[200],
+      autoDismiss: false,
+      // ¡IMPORTANTE! Si el banner se cierra desde adentro (ej. al marcar la última),
+      // devolvemos el booleano a false para que el botón no se desincronice.
+      onBannerClose: () {
+        setState(() {
+          _showNotificationBanner = false;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Escuchas atómicas (Performance óptimo)
     final transactionsAsync = ref.watch(transactionListNotifierProvider);
     final summary = ref.watch(financialSummaryProvider);
     final goalsList = ref.watch(goalListNotifierProvider).value ?? [];
-    final billsList = ref.watch(billListNotifierProvider).value ?? [];
-    final transactionList = ref.watch(filteredTransactionsProvider);
+    // final billsList = ref.watch(billListNotifierProvider).value ?? [];
+    // final transactionList = ref.watch(filteredTransactionsProvider);
     // final isExpanded = ref.watch(listProvider.select((s) => s.isExpanded));
 
     return transactionsAsync.when(
@@ -286,8 +306,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               ),
 
               // 2. Bloques Condicionales de Bienvenida
-              if (_welcomeVdeoCardShown) 
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              if (_welcomeVdeoCardShown)
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
               if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
 
               // const SliverToBoxAdapter(child: FinancialHealthCard()),
@@ -430,7 +450,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final appNotifications = ref.watch(notificationsProvider);
-    int notifCount = appNotifications.length - 1;
+    int notifCount = appNotifications.length;
 
     return AppBar(
       backgroundColor: AppThemeHSL.background,
@@ -485,19 +505,35 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               : AppThemeHSL.textDisabled,
           child: Icon(Icons.notifications, color: AppThemeHSL.textSecondary),
         ),
+        onLongPress:() {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotifListScreen(),
+            ),
+          );
+        },
         onPressed: () {
+          // Asumiendo que 'appNotifications' ya viene de un ref.watch(notificationsProvider) en tu build
           if (appNotifications.isNotEmpty) {
-            ElegantBanner.show(
-              ref: ref,
-              // SIF: Convertimos la lista dinámica a una lista de AppNotification en tiempo de ejecución
-              appNotifications: appNotifications.cast<AppNotification>(),
-              context,
-              customBackgroundColor: AppThemeHSL.surfaceLight,
-              customTextColor: Colors.purple[200],
-              autoDismiss: false,
-              duration: const Duration(seconds: 4),
-            );
+            setState(() {
+              // 1. Invertimos el booleano: si era false pasa a true, si era true pasa a false
+              _showNotificationBanner = !_showNotificationBanner;
+            });
+
+            // 2. Evaluamos el NUEVO estado para mostrar u ocultar
+            if (_showNotificationBanner) {
+              _showNotifBanner(appNotifications.cast<AppNotification>());
+            } else {
+              ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+            }
           } else {
+            // Si no hay notificaciones, reseteamos el estado por seguridad y avisamos
+            setState(() {
+              _showNotificationBanner = false;
+            });
+            ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("No hay nuevas notificaciones")),
             );

@@ -49,7 +49,7 @@ class NotificationCarruselBanner {
                     itemBuilder: (context, index) {
                       final item = notifications[index];
                       // El color viene directamente de tu NotificationModel
-                      final accentColor = item.color ?? Colors.blueAccent;
+                      final accentColor = item.color;
 
                       return Container(
                         padding: const EdgeInsets.all(16),

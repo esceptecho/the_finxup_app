@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
 import 'package:the_finxup_app/models/assets_image_list.dart';
 import 'package:the_finxup_app/models/bill.dart';
@@ -31,12 +32,14 @@ class NotificationService {
       b.dueDate.isBefore(limitDate)
     ).toList();
 
+    
+
     for (var bill in upcomingBills) {
       
       notifications.add(AppNotification(
         id: 'bill-${bill.id}', // <--- ID CONSISTENTE 'bill-456'
         title: 'Factura Próxima',
-        message: '${bill.title} vence pronto. Total: \$${bill.amount}',
+        message: '${bill.title} vence pronto: ${DateFormat('dd/MM/yyyy').format(bill.dueDate)}. Total: \$${bill.amount}',
         type: BannerType.warning,
         icon: Icons.calendar_month_rounded,
         height: 150.0,
@@ -74,17 +77,17 @@ class NotificationService {
     }
 
     // --- REGLA 4: Estado de cuenta limpio ---
-    if (notifications.isEmpty) {
-      notifications.add(AppNotification(
-        id: uuid.v4(), // <--- ID CONSISTENTE 'bill-456'
-        title: 'Todo en orden',
-        message: 'No tienes alertas pendientes para hoy. ¡Buen trabajo!',
-        type: BannerType.info,
-        icon: Icons.info_outline,
-        height: 40.0,
-        imagePath: imagePath,
-      ));
-    }
+    // if (notifications.isEmpty) {
+    //   notifications.add(AppNotification(
+    //     id: uuid.v4(), // <--- ID CONSISTENTE 'bill-456'
+    //     title: 'Todo en orden',
+    //     message: 'No tienes alertas pendientes para hoy. ¡Buen trabajo!',
+    //     type: BannerType.info,
+    //     icon: Icons.info_outline,
+    //     height: 40.0,
+    //     imagePath: imagePath,
+    //   ));
+    // }
 
     return notifications;
   }
