@@ -1,7 +1,9 @@
+
+
 import 'package:flutter/material.dart';
 
 class TableView extends StatelessWidget {
-const TableView({ super.key });
+  const TableView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -11,24 +13,10 @@ const TableView({ super.key });
     );
     return DataTable(
       columns: <DataColumn>[
-        DataColumn(
-          label: Text(
-            'Name',
-            style: titles,
-          ),
-        ),
-        DataColumn(
-          label: Text(
-            'Age',
-            style: titles,
-          ),
-        ),
-        DataColumn(
-          label: Text(
-            'Color',
-            style: titles,
-          ),
-        ),
+        DataColumn(label: Text('Nombre', style: titles)),
+        DataColumn(label: Text('Cantidad', style: titles)),
+        DataColumn(label: Text('Fecha', style: titles)),
+        DataColumn(label: Text('Pagado', style: titles)),
       ],
       rows: const <DataRow>[
         DataRow(
@@ -36,6 +24,7 @@ const TableView({ super.key });
             DataCell(Text('Max')),
             DataCell(Text('21')),
             DataCell(Text('Red')),
+            DataCell(Text('Yes')),
           ],
         ),
         DataRow(
@@ -43,6 +32,7 @@ const TableView({ super.key });
             DataCell(Text('Jane')),
             DataCell(Text('25')),
             DataCell(Text('Blue')),
+            DataCell(Text('no')),
           ],
         ),
         DataRow(
@@ -50,6 +40,7 @@ const TableView({ super.key });
             DataCell(Text('William')),
             DataCell(Text('27')),
             DataCell(Text('Yellow')),
+            DataCell(Text('Yes')),
           ],
         ),
       ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:the_finxup_app/finxup_files/miselanious/table_view.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
 import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
@@ -15,6 +16,7 @@ import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/screens/dashboard_finantial_health.dart';
+import 'package:the_finxup_app/screens/debt_agenda_view.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
 import 'package:the_finxup_app/screens/new_tolerance_calculator_screen.dart';
 import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
@@ -153,6 +155,25 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
           await ref.read(goalListNotifierProvider.notifier).add(newGoal);
         },
       ),
+    );
+  }
+
+  void _abrirBottomSheetDeudas(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled:
+          true, // Crucial para widgets con Expanded y para el teclado
+      useSafeArea: true, // Evita que se superponga con la barra de estado/notch
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        // Envolvemos el Scaffold en un ClipRRect para mantener los bordes redondeados
+        return const ClipRRect(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          child: DebtAgendaView(),
+        );
+      },
     );
   }
 
@@ -384,7 +405,26 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               //           setState(() => _isShowingTransactions = val),
               //     ),
               //   ),
-
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _abrirBottomSheetDeudas(context),
+                    icon: const Icon(Icons.account_balance_wallet),
+                    label: const Text('Deudas & Préstamos'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               //   // const SliverToBoxAdapter(child: SizedBox(height: 8)),
               //   _buildSliverList(
               //     isShowingTransactions: _isShowingTransactions,
@@ -505,12 +545,10 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               : AppThemeHSL.textDisabled,
           child: Icon(Icons.notifications, color: AppThemeHSL.textSecondary),
         ),
-        onLongPress:() {
+        onLongPress: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const NotifListScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const NotifListScreen()),
           );
         },
         onPressed: () {

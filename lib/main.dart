@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:the_finxup_app/models/bill.dart';
+import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
 import 'package:the_finxup_app/screens/login_screen.dart';
@@ -12,6 +13,7 @@ import 'package:the_finxup_app/screens/main_screen.dart';
 import 'package:the_finxup_app/screens/onboardingScreens/onboarding_screen.dart';
 import 'package:the_finxup_app/screens/splash_screen_wrapper.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart'; // <-- IMPORTANTE: Usa hive_ce_flutter
 // import 'package:time_machine/time_machine.dart';
 
 // Importaciones de tus modelos
@@ -68,6 +70,10 @@ void _registerHiveAdapters() {
   if (!Hive.isAdapterRegistered(5)) {
     Hive.registerAdapter(GoalAdapter());
   }
+
+  if (!Hive.isAdapterRegistered(6)) {
+    Hive.registerAdapter(DebtAdapter());
+  }
 }
 
 Future<void> _openHiveBoxes() async {
@@ -76,6 +82,7 @@ Future<void> _openHiveBoxes() async {
     Hive.openBox<Transaction>('transactions'),
     Hive.openBox<Bill>('bills'),
     Hive.openBox<Goal>('goals'),
+    Hive.openBox<Goal>('debts'),
   ]);
 }
 
