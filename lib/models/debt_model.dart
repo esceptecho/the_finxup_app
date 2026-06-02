@@ -1,9 +1,9 @@
-import 'package:hive_ce_flutter/hive_ce_flutter.dart'; // <-- IMPORTANTE: Usa hive_ce_flutter
+import 'package:hive_ce/hive_ce.dart'; // <-- IMPORTANTE: Usa hive_ce_flutter
 
 part 'debt_model.g.dart';
 
 @HiveType(typeId: 6)
-class Debt extends HiveObject {
+class Debt {
   @HiveField(0)
   String nombre;
 

@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/repositories/debt_repository.dart';
+import 'package:hive_ce/hive_ce.dart';
 
-// Provider del Repositorio
 final debtRepositoryProvider = Provider<DebtRepository>((ref) {
-  return DebtRepository();
+  final box = Hive.box<Debt>('debts');
+  return DebtRepository(box);
 });
 
-// Provider del Notifier que maneja la lista de deudas
 final debtListProvider = NotifierProvider<DebtListNotifier, List<Debt>>(() {
   return DebtListNotifier();
 });
@@ -17,13 +17,14 @@ class DebtListNotifier extends Notifier<List<Debt>> {
 
   @override
   List<Debt> build() {
-    _repository = ref.read(debtRepositoryProvider);
+    // Usamos watch en lugar de read
+    _repository = ref.watch(debtRepositoryProvider);
     return _repository.getAllDebts();
   }
 
   Future<void> addDebt(Debt debt) async {
     await _repository.addDebt(debt);
-    state = _repository.getAllDebts(); // Actualiza el estado reactivo
+    state = _repository.getAllDebts();
   }
 
   Future<void> togglePagado(int index) async {
@@ -37,13 +38,19 @@ class DebtListNotifier extends Notifier<List<Debt>> {
     await _repository.deleteDebt(index);
     state = _repository.getAllDebts();
   }
+}
 
-  // Métodos de cálculo computados
-  double get totalDeudas => state
+// Providers independientes para los totales (Estado derivado)
+final totalDeudasProvider = Provider<double>((ref) {
+  final debts = ref.watch(debtListProvider);
+  return debts
       .where((d) => d.esDeuda && !d.pagado)
       .fold(0, (sum, d) => sum + d.cantidad);
+});
 
-  double get totalPrestamos => state
+final totalPrestamosProvider = Provider<double>((ref) {
+  final debts = ref.watch(debtListProvider);
+  return debts
       .where((d) => !d.esDeuda && !d.pagado)
       .fold(0, (sum, d) => sum + d.cantidad);
-}
+});

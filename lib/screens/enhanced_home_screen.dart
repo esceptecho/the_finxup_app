@@ -34,6 +34,7 @@ import 'package:the_finxup_app/widgets/movimientos.dart';
 import 'package:the_finxup_app/widgets/shimmer_border_wrapper.dart';
 import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/summary_card.dart';
+import 'package:the_finxup_app/widgets/tarjeta_previsualizacion_deudas.dart';
 import 'package:the_finxup_app/widgets/transaction_card.dart';
 import 'package:the_finxup_app/widgets/video_welcome_card.dart';
 import 'package:visibility_detector/visibility_detector.dart';
@@ -158,24 +159,6 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     );
   }
 
-  void _abrirBottomSheetDeudas(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled:
-          true, // Crucial para widgets con Expanded y para el teclado
-      useSafeArea: true, // Evita que se superponga con la barra de estado/notch
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        // Envolvemos el Scaffold en un ClipRRect para mantener los bordes redondeados
-        return const ClipRRect(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          child: DebtAgendaView(),
-        );
-      },
-    );
-  }
 
   void _showAddMoneyDialog(Goal goal) {
     final TextEditingController amountController = TextEditingController();
@@ -333,6 +316,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
               // const SliverToBoxAdapter(child: FinancialHealthCard()),
               // const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                  ),
+                  child: TarjetaPrevisualizacionDeudas()
+                ),
+              ),
               if (_welcomeSummaryCardShown) ...[
                 // mover aqui para condicionar
               ],
@@ -345,7 +338,10 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                 child: Container(
                   margin: EdgeInsets.symmetric(horizontal: 12),
                   padding: EdgeInsets.only(top: 16),
-                  color: AppThemeHSL.surfaceLight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(7),
+                    color: AppThemeHSL.surfaceLight
+                    ),
                   child: Stack(
                     alignment: .centerLeft,
                     children: [
@@ -405,26 +401,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               //           setState(() => _isShowingTransactions = val),
               //     ),
               //   ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () => _abrirBottomSheetDeudas(context),
-                    icon: const Icon(Icons.account_balance_wallet),
-                    label: const Text('Deudas & Préstamos'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              
               //   // const SliverToBoxAdapter(child: SizedBox(height: 8)),
               //   _buildSliverList(
               //     isShowingTransactions: _isShowingTransactions,
