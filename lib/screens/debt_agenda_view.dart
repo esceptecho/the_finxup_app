@@ -205,10 +205,9 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
 
               // 3. Listado de deudas (SE QUITÓ EL EXPANDED)
               filteredDebts.isEmpty
-                  ? 
-                  // SizedBox(
-                  //     height: 200, // Le damos una altura fija estimada a la vista vacía
-                  //     child: 
+                  ? SizedBox(
+                      height: 400, // Le damos una altura fija estimada a la vista vacía
+                      child: 
                       Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -228,7 +227,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                             ),
                           ],
                         ),
-                      // ),
+                      ),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(
