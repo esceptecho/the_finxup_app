@@ -219,7 +219,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'No hay préstamos pendientes',
+                              'No hay préstamos para mostrar',
                               style: TextStyle(
                                 color: Colors.white38,
                                 fontSize: 24,
