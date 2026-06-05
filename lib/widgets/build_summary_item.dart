@@ -9,10 +9,11 @@ class BuildSummaryItem extends StatelessWidget {
     required this.amount,
     required this.color,
     required this.icon,
+    
   });
 
   final String title;
-  final double amount;
+  final String amount;
   final Color color;
   final IconData icon;
 
@@ -46,7 +47,7 @@ class BuildSummaryItem extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '\$${amount.toStringAsFixed(2)}',
+          amount.substring(0),
           style: const TextStyle(
             color: Colors.white70,
             fontSize: 22,

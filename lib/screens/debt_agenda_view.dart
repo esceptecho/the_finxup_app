@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/providers/debt_provider.dart';
 import 'package:the_finxup_app/providers/debts_filter_provider.dart';
+import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
+import 'package:the_finxup_app/utils/string_extensions.dart';
 import 'package:the_finxup_app/widgets/build_summary_item.dart';
 import 'package:the_finxup_app/widgets/build_ui_debt_overlay.dart';
 import 'package:the_finxup_app/widgets/debt_card_item.dart';
@@ -40,7 +42,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
     }
 
     final nuevaDeuda = Debt(
-      nombre: _nombreController.text,
+      nombre: _nombreController.text.toCapitalized(),
       cantidad: double.parse(_cantidadController.text),
       fecha: _fechaSeleccionada,
       esDeuda: _esDeuda,
@@ -67,9 +69,12 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
     final bool isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     // 1. Obtenemos todas las deudas y el texto de búsqueda actual
-    // final debts = ref.watch(debtListProvider);
+    final moneda = ref.watch(selectedCurrencyProvider);
     final totalDeudas = ref.watch(totalDeudasProvider);
+    final totalDeudasCantidad = CurrencyFormatter.formatDebt(totalDeudas);
     final totalPrestamos = ref.watch(totalPrestamosProvider);
+    final totalPrestamosCantidad = CurrencyFormatter.formatDebt(totalPrestamos);
+    final balance = ref.watch(balanceProvider);
 
     // provider de busqueda
 
@@ -118,9 +123,11 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(
-                    alpha: 0.03,
-                  ), // Un fondo sutil para dar contexto de tarjeta
+                  color: AppThemeHSL.background,
+                  
+                  // Colors.white.withValues(
+                  //   alpha: 0.03,
+                  // ), // Un fondo sutil para dar contexto de tarjeta
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(color: Colors.white12),
                 ),
@@ -132,24 +139,26 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                     // Sección de saldos (Por Pagar / Por Cobrar)
                     Row(
                       children: [
+                        const SizedBox(width: 12),
                         Expanded(
                           child: BuildSummaryItem(
                             title: 'Por Pagar',
-                            amount: totalDeudas,
+                            amount: totalDeudasCantidad,
                             color: Colors.redAccent,
                             icon: Icons.arrow_upward_rounded,
                           ),
                         ),
                         Container(
                           width: 1,
-                          height: 50,
+                          height: 70,
                           color: Colors.white12,
                           margin: const EdgeInsets.symmetric(horizontal: 16),
                         ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: BuildSummaryItem(
                             title: 'Por Cobrar',
-                            amount: totalPrestamos,
+                            amount: totalPrestamosCantidad,
                             color: Colors.greenAccent,
                             icon: Icons.arrow_downward_rounded,
                           ),
@@ -157,36 +166,100 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                       ],
                     ),
 
-                    const SizedBox(height: 14), // Espaciador controlado
+                    const SizedBox(height: 24), // Espaciador controlado
                     // Botón extendido elegante
-                    TextButton.icon(
-                      onPressed: () => _showDebtsTableDialog(context),
-                      icon: Icon(
-                        Icons.analytics_outlined,
-                        color: AppThemeHSL.textSecondary,
-                        size: 18,
-                      ),
-                      label: Text(
-                        'Tabla de D&P',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppThemeHSL.textSecondary,
-                          fontWeight: FontWeight.w500,
+                    Row(
+                      children: [
+                        // Nuevo selector de moneda
+                        // En el lugar donde tengas tu Dropdown (sea una pantalla normal o un Modal)
+                        Expanded(
+                          child: Consumer(
+                            // 1. Envolvemos en un Consumer para escuchar los cambios correctamente
+                            builder: (context, ref, child) {
+                              // 2. Escuchamos de forma reactiva la moneda seleccionada actual
+                              final monedaSeleccionada = ref.watch(
+                                selectedCurrencyProvider,
+                              );
+
+                              return DropdownButtonFormField<CurrencyType>(
+                                menuMaxHeight: 250,
+                                initialValue:
+                                    monedaSeleccionada, // 3. Le asignamos el estado global de Riverpod
+                                dropdownColor: AppThemeHSL.surface,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'Moneda',
+                                  labelStyle: const TextStyle(
+                                    color: Colors.white60,
+                                  ),
+                                  filled: true,
+                                  fillColor: AppThemeHSL.background,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(7),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                icon: Icon(
+                                  Icons.arrow_drop_down_rounded,
+                                  color: AppThemeHSL.accentGold,
+                                  size: 28,
+                                ),
+                                items: CurrencyType.values.map((moneda) {
+                                  return DropdownMenuItem(
+                                    value: moneda,
+                                    // Nota: Asegúrate de tener implementados los getters .code y .symbol en tu enum CurrencyType
+                                    child: Text(
+                                      '${moneda.code} (${moneda.symbol})',
+                                      style: TextStyle(
+                                        color: AppThemeHSL.accentGold,
+                                      ),
+                                    ), // Asegúrate de tener esta extensión implementada
+                                  );
+                                }).toList(),
+                                onChanged: (CurrencyType? newValue) {
+                                  if (newValue != null) {
+                                    // 4. AQUÍ PASAMOS EL FILTRO AL PROVIDER:
+                                    // Al modificar el .state, notificamos a toda la app del cambio de moneda.
+                                    ref.read(selectedCurrencyProvider.notifier,).state = newValue;
+                                  }
+                                },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                        const SizedBox(width: 4),
+
+                        Expanded(
+                          child: TextButton.icon(
+                            onPressed: () => _showDebtsTableDialog(context),
+                            icon: Icon(
+                              Icons.analytics_outlined,
+                              color: AppThemeHSL.textSecondary,
+                              size: 18,
+                            ),
+                            label: Text(
+                              'Tabla de D&P',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppThemeHSL.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              // Un fondo casi invisible que reacciona al pasar el cursor o presionar
+                              backgroundColor: AppThemeHSL.surface,
+                              // .withValues(alpha: 0.05),
+                            ),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        // Un fondo casi invisible que reacciona al pasar el cursor o presionar
-                        backgroundColor: AppThemeHSL.textSecondary.withValues(
-                          alpha: 0.05,
-                        ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -354,7 +427,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Nueo Préstamo',
+                    'Nuevo Préstamo',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

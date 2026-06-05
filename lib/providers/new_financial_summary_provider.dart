@@ -76,6 +76,17 @@ class CurrencyFormatter {
     return '$sign$formattedNumber';
   }
 
+  static String formatDebt(double amount) {
+    if (amount == 0) return '0.00';
+
+    final String formattedNumber = amount
+        .abs()
+        .toStringAsFixed(2)
+        .replaceAllMapped(_numericRegex, (Match m) => '${m[1]},');
+
+    return formattedNumber;
+  }
+
   /// Formatea un balance mostrando el estado financiero
   static String formatBalance(double balance) {
     return formatAmount(balance);

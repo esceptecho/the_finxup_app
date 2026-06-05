@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
+import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
 class DebtCardItem extends StatelessWidget {
@@ -18,7 +19,7 @@ class DebtCardItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorElement = debt.esDeuda ? Colors.redAccent : Colors.greenAccent;
-
+    final debtCantidad = CurrencyFormatter.formatDebt(debt.cantidad);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -59,7 +60,7 @@ class DebtCardItem extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                '\$${debt.cantidad.toStringAsFixed(2)}',
+                '${debt.currencyType.symbol}$debtCantidad ${debt.currencyType.name}',
                 style: TextStyle(
                   fontWeight: FontWeight.w400,
                   fontSize: 14,
@@ -125,7 +126,7 @@ class DebtCardItem extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: debt.pagado
                       ? Colors.white24
-                      : colorElement.withValues(alpha: 0.6),
+                      : Colors.white38,
                 ),
               ),
               const SizedBox(width: 8),
@@ -155,167 +156,3 @@ class DebtCardItem extends StatelessWidget {
 }
 
 
-
-
-// import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-// import 'package:the_finxup_app/models/debt_model.dart';
-// import 'package:the_finxup_app/theme/app_themeHSL.dart';
-
-// class DebtCardItem extends StatelessWidget {
-//   final Debt debt;
-//   final VoidCallback onCheckChanged;
-//   final VoidCallback onDelete;
-
-//   const DebtCardItem({
-//     super.key,
-//     required this.debt,
-//     required this.onCheckChanged,
-//     required this.onDelete,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final colorElement = debt.esDeuda ? Colors.redAccent : Colors.greenAccent;
-
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 12),
-//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//       decoration: BoxDecoration(
-//         color: AppThemeHSL.surface,
-//         borderRadius: BorderRadius.circular(20),
-//         border: Border.all(color: Colors.white.withValues(alpha: 0.03)),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withValues(alpha: 0.1),
-//             blurRadius: 10,
-//             offset: const Offset(0, 4),
-//           ),
-//         ],
-//       ),
-//       child: Row(
-//         // Asegura que los elementos se centren verticalmente si el texto ocupa 2 líneas
-//         crossAxisAlignment: CrossAxisAlignment.center, 
-//         children: [
-//           const SizedBox(width: 4), 
-          
-//           // 1. Información Central (Título y Fecha)
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Text(
-//                   debt.nombre,
-//                   maxLines: 2, // Máximo de dos líneas
-//                   overflow: TextOverflow.ellipsis, // Puntos suspensivos si se excede
-//                   style: TextStyle(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 16,
-//                     height: 1.2, // Interlineado para mejor legibilidad en 2 líneas
-//                     letterSpacing: -0.2,
-//                     decoration: debt.pagado ? TextDecoration.lineThrough : null,
-//                     color: debt.pagado ? Colors.white38 : Colors.white,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 6), // Ligeramente más espacio
-//                 Row(
-//                   children: [
-//                     // Icono de Estado
-//                     Container(
-//                       margin: const EdgeInsets.only(right: 6),
-//                       padding: const EdgeInsets.all(4), 
-//                       decoration: BoxDecoration(
-//                         color: colorElement.withValues(alpha: 0.1),
-//                         borderRadius: BorderRadius.circular(4), // Radio suavizado
-//                       ),
-//                       child: Icon(
-//                         debt.esDeuda
-//                             ? Icons.arrow_upward_rounded
-//                             : Icons.arrow_downward_rounded,
-//                         color: colorElement,
-//                         size: 13,
-//                       ),
-//                     ),
-//                     Text(
-//                       DateFormat('dd MMM, yyyy').format(debt.fecha),
-//                       style: const TextStyle(
-//                         color: Colors.white38,
-//                         fontSize: 12,
-//                         fontWeight: FontWeight.w500,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           const SizedBox(width: 12), // Más aire entre el título y los números
-          
-//           // 2. Bloque de Monto y Estado (Derecha)
-//           Column(
-//             crossAxisAlignment: CrossAxisAlignment.end,
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               Text(
-//                 '\$${debt.cantidad.toStringAsFixed(2)}',
-//                 style: TextStyle(
-//                   fontWeight: FontWeight.w800,
-//                   fontSize: 16,
-//                   color: debt.pagado ? Colors.white38 : colorElement,
-//                 ),
-//               ),
-//               const SizedBox(height: 4),
-//               Text(
-//                 debt.pagado ? 'Pagado' : 'Pendiente',
-//                 style: TextStyle(
-//                   fontSize: 11,
-//                   fontWeight: FontWeight.bold,
-//                   color: debt.pagado
-//                       ? Colors.white24
-//                       : colorElement.withValues(alpha: 0.6),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(width: 12), // Separación con las acciones
-
-//           // 3. Acciones (Checkbox y Eliminar)
-//           Column(
-//             mainAxisSize: MainAxisSize.min,
-//             mainAxisAlignment: MainAxisAlignment.center, // Mantiene centrado
-//             children: [
-//               SizedBox(
-//                 width: 24,
-//                 height: 24,
-//                 child: Checkbox(
-//                   value: debt.pagado,
-//                   activeColor: Colors.greenAccent,
-//                   checkColor: AppThemeHSL.background,
-//                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(5),
-//                   ),
-//                   side: const BorderSide(color: Colors.white24, width: 1.5),
-//                   onChanged: (_) => onCheckChanged(),
-//                 ),
-//               ),
-//               const SizedBox(height: 12), // Separación equilibrada entre botones
-//               IconButton(
-//                 padding: EdgeInsets.zero,
-//                 constraints: const BoxConstraints(),
-//                 icon: const Icon(
-//                   Icons.close_rounded,
-//                   size: 20,
-//                   color: Colors.white30,
-//                 ),
-//                 splashRadius: 20,
-//                 onPressed: onDelete,
-//               ),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

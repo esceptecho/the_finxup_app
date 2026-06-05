@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 extension StringCasing on String {
   /// Capitaliza solo la primera letra de la cadena

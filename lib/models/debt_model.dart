@@ -59,10 +59,10 @@ class Debt {
 enum CurrencyType {
   @HiveField(0) usd,
   @HiveField(1) eur,
+  @HiveField(5) cop,
   @HiveField(2) mxn,
   @HiveField(3) gbp,
   @HiveField(4) jpy,
-  @HiveField(5) cop,
   @HiveField(6) ars,
   @HiveField(7) clp,
 }

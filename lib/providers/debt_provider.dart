@@ -41,22 +41,46 @@ class DebtListNotifier extends Notifier<List<Debt>> {
   }
 }
 
-// Providers independientes para los totales (Estado derivado)
-final totalDeudasProvider = Provider<double>((ref) {
-  final debts = ref.watch(debtListProvider);
-  return debts
-      .where((d) => d.esDeuda && !d.pagado)
-      .fold(0, (sum, d) => sum + d.cantidad);
-});
-
-final totalPrestamosProvider = Provider<double>((ref) {
-  final debts = ref.watch(debtListProvider);
-  return debts
-      .where((d) => !d.esDeuda && !d.pagado)
-      .fold(0, (sum, d) => sum + d.cantidad);
-});
-
 // Provider para almacenar la consulta de búsqueda actual
 final debtSearchQueryProvider = StateProvider<String>((ref) {
   return '';
+});
+
+
+// 1. Provider para almacenar la moneda seleccionada actualmente
+final selectedCurrencyProvider = StateProvider<CurrencyType>((ref) {
+  return CurrencyType.usd; // Moneda por defecto inicial
+});
+
+// 2. Total Deudas filtrado por moneda
+final totalDeudasProvider = Provider<double>((ref) {
+  final debts = ref.watch(debtListProvider);
+  final selectedCurrency = ref.watch(selectedCurrencyProvider);
+
+  return debts
+      .where(
+        (d) => d.esDeuda && !d.pagado && d.currencyType == selectedCurrency,
+      )
+      .fold(0.0, (sum, d) => sum + d.cantidad);
+});
+
+// 3. Total Préstamos filtrado por moneda
+final totalPrestamosProvider = Provider<double>((ref) {
+  final debts = ref.watch(debtListProvider);
+  final selectedCurrency = ref.watch(selectedCurrencyProvider);
+
+  return debts
+      .where(
+        (d) => !d.esDeuda && !d.pagado && d.currencyType == selectedCurrency,
+      )
+      .fold(0.0, (sum, d) => sum + d.cantidad);
+});
+
+// 4. Balance calculado (Préstamos - Deudas) para la moneda seleccionada
+final balanceProvider = Provider<double>((ref) {
+  final totalPrestamos = ref.watch(totalPrestamosProvider);
+  final totalDeudas = ref.watch(totalDeudasProvider);
+
+  // Puedes cambiar el orden de la resta según consideres un balance positivo o negativo
+  return totalPrestamos - totalDeudas;
 });
