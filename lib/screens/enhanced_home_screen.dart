@@ -2,21 +2,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:the_finxup_app/finxup_files/miselanious/table_view.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
 import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/models/welcome_update_videos.dart';
-import 'package:the_finxup_app/providers/list_notifier.dart';
 import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
 import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/screens/dashboard_finantial_health.dart';
-import 'package:the_finxup_app/screens/debt_agenda_view.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
 import 'package:the_finxup_app/screens/new_tolerance_calculator_screen.dart';
 import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
@@ -25,7 +21,6 @@ import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
 import 'package:the_finxup_app/widgets/balance_legend.dart';
 import 'package:the_finxup_app/widgets/bill_card.dart';
-import 'package:the_finxup_app/widgets/category_filter_selector.dart';
 import 'package:the_finxup_app/widgets/colorize_names_widget.dart';
 import 'package:the_finxup_app/widgets/elegant_banner.dart';
 import 'package:the_finxup_app/widgets/goals_section.dart';
@@ -37,7 +32,6 @@ import 'package:the_finxup_app/widgets/summary_card.dart';
 import 'package:the_finxup_app/widgets/tarjeta_previsualizacion_deudas.dart';
 import 'package:the_finxup_app/widgets/transaction_card.dart';
 import 'package:the_finxup_app/widgets/video_welcome_card.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 class EnhancedHomeScreen extends ConsumerStatefulWidget {
   const EnhancedHomeScreen({super.key});
@@ -47,7 +41,7 @@ class EnhancedHomeScreen extends ConsumerStatefulWidget {
 }
 
 class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
-  bool _isShowingTransactions = true;
+  // bool _isShowingTransactions = true;
   bool isVisible = true;
   bool isSumaryVisible = true;
   bool _isGoalsVisible = true;
@@ -317,7 +311,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               // const SliverToBoxAdapter(child: FinancialHealthCard()),
               // const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -331,7 +325,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               ],
               // if (isSumaryVisible)
               // if (_welcomeSummaryCardShown)
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
               // if (isSumaryVisible)
               // if (_welcomeSummaryCardShown)
               SliverToBoxAdapter(
@@ -409,50 +403,50 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               //     bills: billsList,
               //   ),
               // ],
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  return VisibilityDetector(
-                    key: Key('item-$index'),
-                    onVisibilityChanged: (info) {
-                      if (info.visibleFraction > 0.3) {
-                        print(
-                          'Item $index visible en ${(info.visibleFraction * 100).toStringAsFixed(0)}%',
-                        );
-                        // Activar Lottie, reproducir video, etc.
-                      }
-                    },
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          print('Item $index was clicked');
-                        },
-                        splashColor: Colors.white.withValues(alpha: 0.2),
-                        child: SlidableItem(
-                          onDelete: () {},
-                          onToggleStatus: () {},
-                          child: Container(
-                            height: 150,
-                            margin: EdgeInsets.all(8),
-                            color: Colors
-                                .primaries[index % Colors.primaries.length],
-                            child: Center(
-                              child: Text(
-                                'Item $index',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: .w800,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }, childCount: 50),
-              ),
+              // const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              // SliverList(
+              //   delegate: SliverChildBuilderDelegate((context, index) {
+              //     return VisibilityDetector(
+              //       key: Key('item-$index'),
+              //       onVisibilityChanged: (info) {
+              //         if (info.visibleFraction > 0.3) {
+              //           print(
+              //             'Item $index visible en ${(info.visibleFraction * 100).toStringAsFixed(0)}%',
+              //           );
+              //           // Activar Lottie, reproducir video, etc.
+              //         }
+              //       },
+              //       child: Material(
+              //         color: Colors.transparent,
+              //         child: InkWell(
+              //           onTap: () {
+              //             print('Item $index was clicked');
+              //           },
+              //           splashColor: Colors.white.withValues(alpha: 0.2),
+              //           child: SlidableItem(
+              //             onDelete: () {},
+              //             onToggleStatus: () {},
+              //             child: Container(
+              //               height: 150,
+              //               margin: EdgeInsets.all(8),
+              //               color: Colors
+              //                   .primaries[index % Colors.primaries.length],
+              //               child: Center(
+              //                 child: Text(
+              //                   'Item $index',
+              //                   style: TextStyle(
+              //                     color: Colors.white,
+              //                     fontWeight: .w800,
+              //                   ),
+              //                 ),
+              //               ),
+              //             ),
+              //           ),
+              //         ),
+              //       ),
+              //     );
+              //   }, childCount: 50),
+              // ),
 
               // 5. Botón expandible de transacciones
               const SliverToBoxAdapter(child: SizedBox(height: 12)),

@@ -30,6 +30,7 @@ environment:
 dependencies:
   add_2_calendar: ^3.0.1
   animated_text_kit: ^4.3.0
+  awesome_flutter_extensions: ^2.0.1
   carousel_slider: ^5.1.2
   cupertino_icons: ^1.0.9
   file_picker: ^11.0.2
@@ -58,6 +59,7 @@ dependencies:
   riverpod_annotation: ^4.0.2
   riverpod_generator: ^4.0.3
   scroll_loop_auto_scroll: ^0.0.5
+  shadcn_ui: ^0.54.0
   shared_preferences: ^2.5.5
   smooth_page_indicator: ^2.0.1
   table_calendar: ^3.2.0

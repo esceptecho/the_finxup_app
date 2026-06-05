@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/repositories/debt_repository.dart';
 import 'package:hive_ce/hive_ce.dart';
@@ -53,4 +54,9 @@ final totalPrestamosProvider = Provider<double>((ref) {
   return debts
       .where((d) => !d.esDeuda && !d.pagado)
       .fold(0, (sum, d) => sum + d.cantidad);
+});
+
+// Provider para almacenar la consulta de búsqueda actual
+final debtSearchQueryProvider = StateProvider<String>((ref) {
+  return '';
 });
