@@ -22,6 +22,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
   final _nombreController = TextEditingController();
   final _cantidadController = TextEditingController();
   bool _esDeuda = true;
+  CurrencyType _monedaSeleccionada = CurrencyType.usd;
   DateTime _fechaSeleccionada = DateTime.now();
 
   final DateFormat dateFormat = DateFormat('dd/MM/yyyy');
@@ -43,6 +44,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
       cantidad: double.parse(_cantidadController.text),
       fecha: _fechaSeleccionada,
       esDeuda: _esDeuda,
+      currencyType: _monedaSeleccionada,
     );
 
     ref.read(debtListProvider.notifier).addDebt(nuevaDeuda);
@@ -112,69 +114,84 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 1. Resumen de balances financieros
+              SizedBox(height: 12),
               Container(
-                height: 150,
-                margin: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 24,
-                  horizontal: 16,
-                ),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppThemeHSL.surfaceLight,
+                  color: Colors.white.withValues(
+                    alpha: 0.03,
+                  ), // Un fondo sutil para dar contexto de tarjeta
                   borderRadius: BorderRadius.circular(7),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                  border: Border.all(color: Colors.white12),
                 ),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment
+                      .end, // Alinea el botón al extremo derecho
                   children: [
-                    Expanded(
-                      flex: 2,
-                      child: BuildSummaryItem(
-                        title: 'Por Pagar',
-                        amount: totalDeudas,
-                        color: Colors.redAccent,
-                        icon: Icons.arrow_upward_rounded,
-                      ),
-                    ),
-                    Container(width: 1, height: 45, color: Colors.white12),
-                    Expanded(
-                      flex: 2,
-                      child: BuildSummaryItem(
-                        title: 'Por Cobrar',
-                        amount: totalPrestamos,
-                        color: Colors.greenAccent,
-                        icon: Icons.arrow_downward_rounded,
-                      ),
-                    ),
-                    Expanded(
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.analytics_outlined,
-                          color: AppThemeHSL.textSecondary,
-                          size: 28,
+                    // Sección de saldos (Por Pagar / Por Cobrar)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BuildSummaryItem(
+                            title: 'Por Pagar',
+                            amount: totalDeudas,
+                            color: Colors.redAccent,
+                            icon: Icons.arrow_upward_rounded,
+                          ),
                         ),
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                        tooltip: 'Ver tabla detallada',
-                        onPressed: () => _showDebtsTableDialog(context),
+                        Container(
+                          width: 1,
+                          height: 50,
+                          color: Colors.white12,
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                        ),
+                        Expanded(
+                          child: BuildSummaryItem(
+                            title: 'Por Cobrar',
+                            amount: totalPrestamos,
+                            color: Colors.greenAccent,
+                            icon: Icons.arrow_downward_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14), // Espaciador controlado
+                    // Botón extendido elegante
+                    TextButton.icon(
+                      onPressed: () => _showDebtsTableDialog(context),
+                      icon: Icon(
+                        Icons.analytics_outlined,
+                        color: AppThemeHSL.textSecondary,
+                        size: 18,
+                      ),
+                      label: Text(
+                        'Tabla de D&P',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppThemeHSL.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        // Un fondo casi invisible que reacciona al pasar el cursor o presionar
+                        backgroundColor: AppThemeHSL.textSecondary.withValues(
+                          alpha: 0.05,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-
+              SizedBox(height: 24),
               // 2. Encabezado de la lista
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -206,9 +223,9 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
               // 3. Listado de deudas (SE QUITÓ EL EXPANDED)
               filteredDebts.isEmpty
                   ? SizedBox(
-                      height: 400, // Le damos una altura fija estimada a la vista vacía
-                      child: 
-                      Center(
+                      height:
+                          400, // Le damos una altura fija estimada a la vista vacía
+                      child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -353,6 +370,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                       prefixIcon: Icon(
                         Icons.abc_rounded,
                         color: AppThemeHSL.accentGold,
+                        size: 32,
                       ),
                       filled: true,
                       fillColor: AppThemeHSL.background,
@@ -365,6 +383,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                   ),
                   const SizedBox(height: 14),
                   TextField(
+                    maxLength: 9,
                     controller: _cantidadController,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -373,18 +392,68 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                     decoration: InputDecoration(
                       labelText: 'Cantidad',
                       labelStyle: const TextStyle(color: Colors.white60),
-                      prefixIcon: Icon(
-                        Icons.attach_money_rounded,
-                        color: AppThemeHSL.accentGold,
-                      ),
                       filled: true,
                       fillColor: AppThemeHSL.background,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
+
+                      // --- AQUÍ ESTÁ EL TRUCO ---
+                      prefixIcon: Container(
+                        width:
+                            105, // Controla estrictamente el ancho del selector
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<CurrencyType>(
+                                  value: _monedaSeleccionada,
+                                  dropdownColor: AppThemeHSL.surface,
+                                  menuWidth: 80,
+                                  icon: Icon(
+                                    Icons.arrow_drop_down_rounded,
+                                    color: AppThemeHSL.accentGold,
+                                    size: 28,
+                                  ),
+                                  isDense:
+                                      true, // Hace que el diseño sea más compacto internamente
+                                  items: CurrencyType.values.map((moneda) {
+                                    return DropdownMenuItem(
+                                      value: moneda,
+                                      // Usamos el código (USD, EUR) para que no sature el espacio
+                                      child: Text(
+                                        moneda.code,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppThemeHSL.accentGold,
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (CurrencyType? newValue) {
+                                    if (newValue != null) {
+                                      // Actualiza el estado del modal usando setModalState
+                                      setModalState(() {
+                                        _monedaSeleccionada = newValue;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                            // Línea divisoria vertical súper elegante
+                            Container(
+                              height: 24,
+                              width: 1,
+                              color: Colors.white12,
+                              margin: const EdgeInsets.only(left: 4, right: 12),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    maxLength: 9,
                   ),
                   const SizedBox(height: 16),
                   Row(

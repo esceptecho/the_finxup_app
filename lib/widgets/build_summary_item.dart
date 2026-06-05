@@ -20,9 +20,10 @@ class BuildSummaryItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: .start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(4),

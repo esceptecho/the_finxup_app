@@ -70,9 +70,15 @@ void _registerHiveAdapters() {
     Hive.registerAdapter(GoalAdapter());
   }
 
+if (!Hive.isAdapterRegistered(7)) {
+    Hive.registerAdapter(CurrencyTypeAdapter());
+  }
+  
   if (!Hive.isAdapterRegistered(6)) {
     Hive.registerAdapter(DebtAdapter());
   }
+
+  
 }
 
 Future<void> _openHiveBoxes() async {
