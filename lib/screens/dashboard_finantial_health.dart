@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart'; // <-- Nueva importación para animaciones
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/notifications_provider.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
@@ -14,7 +15,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Escuchamos de forma reactiva tanto el estado como el notifier
     // Escuchamos el motor analítico completo
-    final financeAsync = ref.watch(financeLogicProvider);
+    final financeAsync = ref.watch(dsFinanceLogicProvider);
     // Cambiado a .watch para reactividad
     final alerts = ref.watch(notificationlertsProvider);
 

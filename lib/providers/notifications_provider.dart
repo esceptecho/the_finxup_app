@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/notification_model.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 // Asegúrate de cambiar esta importación al archivo donde guardaste el nuevo provider
 import 'package:the_finxup_app/providers/goal_prediction_provider.dart';
@@ -8,7 +9,7 @@ import 'package:the_finxup_app/providers/goal_prediction_provider.dart';
 // Este provider "escucha" los cambios en financeLogicProvider
 final notificationlertsProvider = Provider<List<NotificationModel>>((ref) {
   // 1. Observamos el motor analítico completo de forma asíncrona
-  final financeAsync = ref.watch(financeLogicProvider);
+  final financeAsync = ref.watch(dsFinanceLogicProvider);
 
   // 2. Cambiamos ref.read por ref.watch para que el provider de alertas también
   // se reactive si las predicciones de metas cambian.

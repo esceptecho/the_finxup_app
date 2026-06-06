@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import 'package:the_finxup_app/models/life_style_profile.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
+import 'package:the_finxup_app/models/ds_life_style_profile.dart';
+// import 'package:the_finxup_app/models/life_style_profile.dart';
+// import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/finance_health_detail_sheet.dart';
 
@@ -47,7 +49,8 @@ class SummaryCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // 1. Escuchamos los cambios en las transacciones para recalcular todo en vivo
-    final financeAsync = ref.watch(financeLogicProvider);
+    // final financeAsync = ref.watch(financeLogicProvider);
+    final financeAsync = ref.watch(dsFinanceLogicProvider);
 
     // 2. Extraemos la analítica avanzada de tu Notifier
     return financeAsync.when(
@@ -58,7 +61,7 @@ class SummaryCard extends ConsumerWidget {
       data: (engine) {
         // Extraemos toda la analítica en vivo de tu clase unificada
         final profile = engine.getLifestyleLevel();
-        final profileLttie = engine.getLifestyleLevelLottie();
+        // final profileLttie = engine.getLifestyleLevelLottie();
         final healthIndex = engine.getFinancialHealthIndex();
         final liquidityDays = engine.predictDaysOfLiquidity();
         final foodTrend = engine.getFoodSpendingTrend();
@@ -203,7 +206,7 @@ class SummaryCard extends ConsumerWidget {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => _showLifestyleProfileDialogLottie(context, profileLttie,
+                    onTap: () => _showLifestyleProfileDialogLottie(context, profile,
                     ),
                     borderRadius: BorderRadius.circular(7),
                     child: Container(
@@ -257,78 +260,11 @@ class SummaryCard extends ConsumerWidget {
     );
   }
 
-  // void _showLifestyleProfileDialog(
-  //   BuildContext context, LifestyleProfile profile) {
-  //   final statusColor = _getStatusColor(profile.statusColor);
 
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       backgroundColor: AppThemeHSL.surface,
-  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-  //       title: Row(
-  //         children: [
-  //           if (profile.lottieAsset == null)
-  //             Icon(Icons.psychology_alt, color: statusColor, size: 28)
-  //           else
-  //             SizedBox(
-  //               width: 40,
-  //               height: 40,
-  //               child: Lottie.asset(
-  //                 profile.lottieAsset!,
-  //                 fit: BoxFit.contain,
-  //                 repeat: profile.loopLottie,
-  //               ),
-  //             ),
-  //           const SizedBox(width: 12),
-  //           Expanded(
-  //             child: Text(
-  //               profile.name,
-  //               style: const TextStyle(
-  //                 color: Colors.white,
-  //                 fontSize: 22,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           if (profile.lottieAsset != null)
-  //             Container(
-  //               width: double.infinity,
-  //               height: profile.lottieHeight,
-  //               margin: const EdgeInsets.only(bottom: 16),
-  //               child: Lottie.asset(
-  //                 profile.lottieAsset!,
-  //                 fit: BoxFit.contain,
-  //                 repeat: profile.loopLottie,
-  //                 reverse: false,
-  //                 animate: true,
-  //               ),
-  //             ),
-  //           _buildMessageCard(profile.message, statusColor),
-  //           const SizedBox(height: 16),
-  //           _buildAdviceCard(profile.advice, statusColor),
-  //         ],
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           style: TextButton.styleFrom(foregroundColor: statusColor),
-  //           child: const Text("Entendido"),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-  // void _showLifestyleProfileDialog(BuildContext context, LifestyleProfile profile) {
 // Diálogo actualizado
   void _showLifestyleProfileDialogLottie(
     BuildContext context,
-    LifestyleProfile profile) {
+    NewLifestyleProfile profile) {
     final statusColor = _getStatusColor(profile.statusColor);
 
     showDialog(

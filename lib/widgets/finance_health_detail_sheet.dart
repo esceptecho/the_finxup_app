@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 
 class FinancialHealthDetailsSheet extends ConsumerWidget {
@@ -8,7 +9,7 @@ class FinancialHealthDetailsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final financeAsync = ref.watch(financeLogicProvider);
+    final financeAsync = ref.watch(dsFinanceLogicProvider);
 
     return financeAsync.when(
       loading: () => const SizedBox(

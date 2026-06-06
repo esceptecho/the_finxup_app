@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/finance_health_detail_sheet.dart';
@@ -9,7 +10,7 @@ class FinancialHealthCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final financeAsync = ref.watch(financeLogicProvider);
+    final financeAsync = ref.watch(dsFinanceLogicProvider);
 
     return financeAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),

@@ -2,7 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 // import 'package:the_finxup_app/providers/finance_analytics_engine.dart';
 // import 'package:the_finxup_app/providers/finance_logic_provider.dart';
 

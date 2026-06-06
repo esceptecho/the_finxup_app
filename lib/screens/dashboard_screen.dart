@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:the_finxup_app/models/ds_life_style_profile.dart';
 import 'package:the_finxup_app/models/life_style_profile.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/old_finance_analytics_engine.dart';
 // import 'package:the_finxup_app/providers/finance_logic_provider.dart';
@@ -27,7 +29,7 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // final engineAsync = ref.watch(financeLogicProvider);
-    final engineAsync = ref.watch(financeLogicProvider);
+    final engineAsync = ref.watch(dsFinanceLogicProvider);
     final notifications = ref.watch(notificationsProvider);
 
     return Scaffold(
@@ -140,7 +142,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInsightsGrid(LifestyleProfile userLevel, String foodTrend) {
+  Widget _buildInsightsGrid(NewLifestyleProfile userLevel, String foodTrend) {
     // Convertimos el String del color del perfil en un Color real de Flutter
     Color getProfileColor(String colorName) {
       switch (colorName) {

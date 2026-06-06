@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 
 class UserLevelBadge extends ConsumerWidget {
@@ -26,7 +27,7 @@ class UserLevelBadge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Obtenemos el perfil completo (LifestyleProfile)
-    final financeAsync = ref.watch(financeLogicProvider);
+    final financeAsync = ref.watch(dsFinanceLogicProvider);
 
     return financeAsync.maybeWhen(
       data: (engine) {
