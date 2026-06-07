@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart'; // <-- Nueva importación para animaciones
 import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/notifications_provider.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
@@ -17,7 +16,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
     // Escuchamos el motor analítico completo
     final financeAsync = ref.watch(dsFinanceLogicProvider);
     // Cambiado a .watch para reactividad
-    final alerts = ref.watch(notificationlertsProvider);
+    final alerts = ref.watch(notificationAlertsProvider);
 
     // --- UX MEJORADA: Vista del Estado Vacío con Lottie ---
     return financeAsync.when(
@@ -165,136 +164,7 @@ class DashboardFinancialHealth extends ConsumerWidget {
     );
   } // FIN BUILD
 
-  // --- WIDGETS DE APOYO REDISEÑADOS ---
-  Widget _buildHealthScoreCard(double calculatedBalance) {
-    // Obtenemos el perfil de salud detallado según el puntaje matemático
-    final healthProfile = _getHealthStatusProfile(calculatedBalance);
-    final bool isScorePositive = calculatedBalance >= 0;
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isScorePositive
-              ? [AppThemeHSL.incomeDark, AppThemeHSL.income]
-              : [AppThemeHSL.expenseLight, AppThemeHSL.expense],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(7),
-        boxShadow: [
-          BoxShadow(
-            color:
-                (isScorePositive ? AppThemeHSL.incomeDark : AppThemeHSL.expense)
-                    .withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Animación Lottie de fondo reactiva
-          Positioned(
-            right: -10,
-            bottom: -10,
-            child: Opacity(
-              opacity: 0.9,
-              child: Lottie.asset(
-                isScorePositive
-                    ? 'assets/lotties/Man_flyingairplane.json'
-                    : 'assets/lotties/warning_pulse.json',
-                width: 130,
-                height: 130,
-                fit: BoxFit.contain,
-                repeat: false,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: .min,
-              children: [
-                Text(
-                  "Indice de Salud Financiera",
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  textBaseline: TextBaseline.alphabetic,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  children: [
-                    Text(
-                      calculatedBalance.toStringAsFixed(0),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 42,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "pts",
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // --- BADGE MULTI-OPCIONES DINÁMICO ---
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(
-                      alpha: 0.3,
-                    ), // Un fondo ligeramente oscuro para contrastar cualquier color de texto
-                    borderRadius: BorderRadius.circular(7),
-                    border: Border.all(
-                      color: healthProfile.badgeColor.withValues(alpha: 0.4),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        healthProfile.icon,
-                        color: healthProfile.badgeColor,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        healthProfile.label,
-                        style: TextStyle(
-                          color: healthProfile.badgeColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLiquidityCard(double days, BuildContext context) {
     final bool isLowLiquidity = days < 15;
@@ -411,31 +281,4 @@ class HealthStatusProfile {
   });
 }
 
-// Método para calcular el estado basado estrictamente en los puntos del Índice
-HealthStatusProfile _getHealthStatusProfile(double score) {
-  if (score >= 500) {
-    return HealthStatusProfile(
-      label: "Salud Excelente ¡Sigue así!",
-      icon: Icons.workspace_premium_rounded,
-      badgeColor: Colors.greenAccent,
-    );
-  } else if (score >= 0) {
-    return HealthStatusProfile(
-      label: "Hábito Estable y Balanceado",
-      icon: Icons.trending_up_rounded,
-      badgeColor: Colors.tealAccent,
-    );
-  } else if (score >= -300) {
-    return HealthStatusProfile(
-      label: "Advertencia: Recorta gastos hormiga",
-      icon: Icons.report_problem_rounded,
-      badgeColor: Colors.orangeAccent,
-    );
-  } else {
-    return HealthStatusProfile(
-      label: "Alerta Crítica: Revisa tu presupuesto",
-      icon: Icons.gavel_rounded,
-      badgeColor: Colors.redAccent,
-    );
-  }
-}
+

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
+import 'package:the_finxup_app/screens/ds_statistics_screen.dart';
 import 'package:the_finxup_app/screens/enhanced_home_screen.dart';
 import 'package:the_finxup_app/screens/main_transactions_screen.dart';
 import 'package:the_finxup_app/screens/statistics_screen.dart';
@@ -49,7 +50,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             const EnhancedHomeScreen(),
             const MainTransactionsScreenV3(),
             // const HomeMainScreen(),
-            StatisticsScreen(transactions: transactions), // <--- Lista validada
+            DsStatisticsScreen(transactions: transactions), // <--- Lista validada
             const DashboardScreen(),
             const TransactionCalendarScreen(),
           ];

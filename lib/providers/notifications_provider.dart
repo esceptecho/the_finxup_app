@@ -1,100 +1,142 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/models/notification_model.dart';
 import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
-// Asegúrate de cambiar esta importación al archivo donde guardaste el nuevo provider
 import 'package:the_finxup_app/providers/goal_prediction_provider.dart';
 
-// Este provider "escucha" los cambios en financeLogicProvider
-final notificationlertsProvider = Provider<List<NotificationModel>>((ref) {
-  // 1. Observamos el motor analítico completo de forma asíncrona
+// Proveedor de alertas reactivo que escucha el motor financiero mejorado
+final notificationAlertsProvider = Provider<List<NotificationModel>>((ref) {
   final financeAsync = ref.watch(dsFinanceLogicProvider);
-
-  // 2. Cambiamos ref.read por ref.watch para que el provider de alertas también
-  // se reactive si las predicciones de metas cambian.
   final predictions = ref.watch(goalPredictionProvider);
 
-  // Desenvolvemos el AsyncValue usando el método formal de Riverpod
   return financeAsync.maybeWhen(
     data: (engine) {
-      // Si el motor no tiene transacciones cargadas, no hay notificaciones
       if (engine.transactions.isEmpty) return [];
 
-      List<NotificationModel> notifications = [];
+      final notifications = <NotificationModel>[];
 
-      // --- APLICACIÓN MAT-142: Ecuaciones Cuadráticas ---
-      // Los métodos matemáticos se llaman directamente desde la instancia 'engine'
+      // ----- 1. ALERTA DE LIQUIDEZ (ecuación cuadrática) -----
       final daysLeft = engine.predictDaysOfLiquidity();
       if (daysLeft > 0 && daysLeft < 15) {
         notifications.add(
           NotificationModel(
-            title: "Alerta de Liquidez",
+            title: "⏳ Alerta de Liquidez",
             message:
-                "Aceleración de gastos detectada. Tu saldo podría llegar a cero en ${daysLeft.toStringAsFixed(0)} días.",
+                "Tu saldo actual podría agotarse en ${daysLeft.toStringAsFixed(0)} días si mantienes el ritmo de gastos.",
             icon: Icons.timer_off,
             color: Colors.red,
           ),
         );
       }
 
-      // --- APLICACIÓN MAT-142: Evaluación de Funciones ---
+      // ----- 2. ALERTAS DE SALUD FINANCIERA (usando el perfil mejorado) -----
+      final healthProfile = engine.getHealthStatusProfile();
       final healthScore = engine.getFinancialHealthIndex();
-      if (healthScore > 1000) {
+
+      if (healthProfile.label.contains("Alerta Crítica")) {
         notifications.add(
           NotificationModel(
-            title: "¡Salud Financiera Óptima!",
+            title: "🚨 Crisis Financiera Detectada",
+            message: healthProfile.description.length > 100
+                ? "${healthProfile.description.substring(0, 100)}..."
+                : healthProfile.description,
+            icon: Icons.gavel_rounded,
+            color: Colors.redAccent,
+          ),
+        );
+      } else if (healthProfile.label.contains("Advertencia")) {
+        notifications.add(
+          NotificationModel(
+            title: "⚠️ Atención: Gastos Hormiga",
+            message: healthProfile.description,
+            icon: Icons.report_problem_rounded,
+            color: Colors.orange,
+          ),
+        );
+      } else if (healthScore > 1000) {
+        notifications.add(
+          NotificationModel(
+            title: "🏆 Salud Financiera Óptima",
             message:
-                "La evaluación de tus hábitos (3f - 4g) muestra un crecimiento excelente.",
+                "Tu índice supera los 1000 puntos. ¡Sigue así! Revisa el desglose para mantenerlo.",
             icon: Icons.emoji_events,
             color: Colors.green,
           ),
         );
-      } else if (healthScore < 0) {
+      }
+
+      // ----- 3. ALERTAS DE ESTILO DE VIDA (gastos en ocio) -----
+      final lifestyle = engine.getLifestyleLevel(includeLottie: false);
+      if (lifestyle.name == "Vividor (Alerta Roja)") {
         notifications.add(
           NotificationModel(
-            title: "Riesgo Financiero",
-            message:
-                "Tus deudas o gastos impulsivos están superando tus ahorros.",
-            icon: Icons.warning_amber_rounded,
-            color: Colors.orange,
+            title: "🎭 Estilo de Vida Insostenible",
+            message: lifestyle.description,
+            icon: Icons.local_fire_department,
+            color: Colors.deepOrange,
+          ),
+        );
+      } else if (lifestyle.name == "Explorador del Confort") {
+        notifications.add(
+          NotificationModel(
+            title: "🍕 Gasto Hormiga en Aumento",
+            message: lifestyle.description,
+            icon: Icons.shopping_cart,
+            color: Colors.orangeAccent,
           ),
         );
       }
 
-      // --- APLICACIÓN MAT-142: Intervalos de Crecimiento ---
+      // ----- 4. TENDENCIA DE GASTO EN COMIDA -----
       final foodTrend = engine.getFoodSpendingTrend();
       if (foodTrend.contains("Creciente")) {
+        final avgFood = engine.getAverageMonthlyExpense(
+          ExpenseSubCategory.food,
+          months: 3,
+        );
         notifications.add(
           NotificationModel(
-            title: "Tendencia de Gasto en Comida",
+            title: "📈 Tendencia al Alza en Alimentos",
             message:
-                "Tus gastos en alimentación están en un intervalo creciente respecto al mes pasado.",
+                "Tu gasto en comida viene aumentando. Promedio actual: \$${avgFood.toStringAsFixed(2)}. Revisa tus hábitos.",
             icon: Icons.restaurant_menu,
             color: Colors.purple,
           ),
         );
       }
 
-      // --- PROYECCIÓN DE METAS ---
+      // ----- 5. VIABILIDAD DE METAS (si están por debajo del 20%) -----
+      final goalsAlerts = engine.checkGoalsViability();
+      if (goalsAlerts.isNotEmpty) {
+        // Tomamos la primera alerta para no saturar, o podemos agregar múltiples
+        notifications.add(
+          NotificationModel(
+            title: "🎯 Meta en Riesgo",
+            message: goalsAlerts.first,
+            icon: Icons.flag,
+            color: Colors.blueAccent,
+          ),
+        );
+      }
+
+      // ----- 6. PROYECCIÓN DE METAS (del provider externo) -----
       for (final pred in predictions) {
         if (pred.monthsNeeded <= 3) {
           notifications.add(
             NotificationModel(
-              title: '🎯 Meta al alcance',
+              title: '🎉 Meta al Alcance',
               message: pred.message,
               icon: Icons.flag,
-              color: Colors.blueAccent,
+              color: Colors.greenAccent,
             ),
           );
-          break; // Una sola notificación para no saturar la UI
+          break; // Una notificación es suficiente
         }
       }
 
       return notifications;
     },
-    // Si el provider financiero está cargando o cae en error,
-    // evitamos romper la UI devolviendo una lista vacía temporalmente.
     orElse: () => [],
   );
 });

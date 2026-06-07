@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 // import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/notifications_provider.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
@@ -14,7 +13,7 @@ class FinancialHealthDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Escuchamos el estado y el notifier
     final financeAsync = ref.watch(dsFinanceLogicProvider);
-    final alerts = ref.watch(notificationlertsProvider);
+    final alerts = ref.watch(notificationAlertsProvider);
 
     return financeAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),

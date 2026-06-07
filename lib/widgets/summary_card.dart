@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 import 'package:the_finxup_app/models/ds_life_style_profile.dart';
+import 'package:the_finxup_app/models/hive_transaction_model.dart';
 // import 'package:the_finxup_app/models/life_style_profile.dart';
 // import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
 import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
@@ -65,6 +66,7 @@ class SummaryCard extends ConsumerWidget {
         final healthIndex = engine.getFinancialHealthIndex();
         final liquidityDays = engine.predictDaysOfLiquidity();
         final foodTrend = engine.getFoodSpendingTrend();
+        final statusColor = _getStatusColor(profile.statusColor);
 
         return Card(
           margin: const EdgeInsets.all(4.0),
@@ -112,6 +114,19 @@ class SummaryCard extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     // Badge dinámico según el perfil devuelto por tu algoritmo
+                    // TextButton.icon(
+                    //   onPressed: () {},
+
+                    //   label: Text(
+                    //     profile.name,
+                    //     style: const TextStyle(
+                    //       color: Colors.white,
+                    //       fontSize: 12,
+                    //       fontWeight: FontWeight.bold,
+                    //     ),
+                    //   ),
+                    //   icon: Icon(Icons.person, color: Colors.white70,),
+                    // ),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -121,19 +136,23 @@ class SummaryCard extends ConsumerWidget {
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: statusColor,
+                          // Colors.white.withValues(alpha: 0.25),
                         ),
                       ),
-                      child: Text(
-                        profile.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                      child: GestureDetector(
+                        onTap: ()  => _showLifestyleProfileDialogLottie(context, profile),
+                        child: Text(
+                          profile.name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                    if (onCloseTap != null) ...[
+                    // if (onCloseTap != null) ...[
                       // const SizedBox(width: 8),
                       // IconButton(
                       //   onPressed: onCloseTap,
@@ -143,7 +162,7 @@ class SummaryCard extends ConsumerWidget {
                       //     backgroundColor: Colors.white.withValues(alpha: 0.08),
                       //   ),
                       // ),
-                    ],
+                    // ],
                   ],
                 ),
 
@@ -172,7 +191,7 @@ class SummaryCard extends ConsumerWidget {
                       icon: Icons.hourglass_top_rounded,
                       iconColor: liquidityDays > 7
                           ? Colors.lightBlueAccent
-                          : Colors.amberAccent,
+                          : Colors.grey,
                       value: liquidityDays == 0
                           ? '0'
                           : liquidityDays.toStringAsFixed(0),
@@ -195,7 +214,10 @@ class SummaryCard extends ConsumerWidget {
                             : (foodTrend.contains('📉') ? '📉' : '➖'),
                         style: const TextStyle(fontSize: 12),
                       ),
-                      onTap: () {},
+                      onTap: () => _showFoodTrendDetails(
+                        context,
+                        engine,
+                      ), // ✅ AHORA SÍ HACE ALGO
                     ),
                   ],
                 ),
@@ -206,8 +228,7 @@ class SummaryCard extends ConsumerWidget {
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => _showLifestyleProfileDialogLottie(context, profile,
-                    ),
+                    onTap: () => _showLifestyleProfileDialogLottie(context, profile,),
                     borderRadius: BorderRadius.circular(7),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -261,7 +282,7 @@ class SummaryCard extends ConsumerWidget {
   }
 
 
-// Diálogo actualizado
+  // Diálogo actualizado
   void _showLifestyleProfileDialogLottie(
     BuildContext context,
     NewLifestyleProfile profile) {
@@ -316,8 +337,11 @@ class SummaryCard extends ConsumerWidget {
                   animate: true,
                 ),
               ),
+            // Dentro del Column del content
             _buildMessageCard(profile.message, statusColor),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            _buildDescriptionCard(profile.description, statusColor), // NUEVO
+            const SizedBox(height: 12),
             _buildAdviceCard(profile.advice, statusColor),
           ],
         ),
@@ -332,6 +356,107 @@ class SummaryCard extends ConsumerWidget {
     );
   }
 
+  void _showFoodTrendDetails(
+    BuildContext context,
+    FinanceAnalyticsEngine engine,
+  ) {
+    final trend = engine.getFoodSpendingTrend();
+    final monthlyAvg = engine.getAverageMonthlyExpense(
+      ExpenseSubCategory.food,
+      months: 3,
+    );
+    final totalFood = engine.getTotalExpenseByCategory(ExpenseSubCategory.food);
+    final healthProfile = engine.getHealthStatusProfile();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppThemeHSL.surfaceLight,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.restaurant_rounded, color: Colors.purpleAccent),
+            const SizedBox(width: 12),
+            const Text(
+              "Gasto en Alimentos",
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow("Tendencia:", trend, Colors.purpleAccent),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              "Promedio últimos 3 meses:",
+              "\$${monthlyAvg.toStringAsFixed(2)}",
+              Colors.white70,
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              "Total acumulado:",
+              "\$${totalFood.toStringAsFixed(2)}",
+              Colors.white70,
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white24),
+            const SizedBox(height: 8),
+            Text(
+              "💡 Consejo: ${_getFoodAdvice(trend, monthlyAvg, healthProfile)}",
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cerrar",
+              style: TextStyle(color: Colors.purpleAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFoodAdvice(String trend, double avg, NewHealthStatusProfile health) {
+    if (avg > 300) {
+      return "Tu gasto en comida es alto. Considera cocinar en casa 2-3 veces más por semana.";
+    } else if (trend.contains("📈") && avg > 150) {
+      return "Tu gasto va en aumento. Establece un presupuesto semanal para comer fuera.";
+    } else if (avg < 100) {
+      return "Excelente control en alimentos. ¡Invierte el ahorro en tus metas!";
+    }
+    return "Mantén este hábito saludable. Revisa si puedes optimizar aún más.";
+  }
+
+  Widget _buildDescriptionCard(String description, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.analytics_outlined, color: color, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              description,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   Widget _buildMessageCard(String message, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -351,6 +476,31 @@ class SummaryCard extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value, Color valueColor) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

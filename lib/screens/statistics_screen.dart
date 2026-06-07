@@ -286,24 +286,28 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             // 4. Tarjetas de Resumen Adicionales
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.trending_up_rounded,
-                      title: 'Gasto Más Alto',
-                      value: currencyFormatter.format(_maxExpense),
-                      color: const Color(0xFFFF1744), // Rojo Neón
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.analytics_outlined,
-                      title: 'Promedio Diario',
-                      value: currencyFormatter.format(_getDailyAverage()),
-                      color: AppThemeHSL.accentGold, // Dorado
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSummaryCard(
+                          icon: Icons.trending_up_rounded,
+                          title: 'Gasto Más Alto',
+                          value: currencyFormatter.format(_maxExpense),
+                          color: const Color(0xFFFF1744), // Rojo Neón
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildSummaryCard(
+                          icon: Icons.analytics_outlined,
+                          title: 'Promedio Diario',
+                          value: currencyFormatter.format(_getDailyAverage()),
+                          color: AppThemeHSL.accentGold, // Dorado
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

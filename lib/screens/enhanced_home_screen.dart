@@ -607,7 +607,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
           strokeWidth: 2.0,
           isAnimating: true,
           repeat: false,
-          shimmerColor: AppThemeHSL.incomeDark,
+          shimmerColor: AppThemeHSL.textPrimary,
           child: SummaryCard(
             userName: 'Arees',
             onCloseTap: () => setState(() => _welcomeSummaryCardShown = false),
