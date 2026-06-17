@@ -153,7 +153,6 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     );
   }
 
-
   void _showAddMoneyDialog(Goal goal) {
     final TextEditingController amountController = TextEditingController();
     showDialog(
@@ -289,20 +288,17 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
           Scaffold(body: Center(child: Text("Error al cargar datos: $err"))),
       data: (transactions) {
         return Scaffold(
-          appBar: _buildAppBar(context),
+          // appBar: _buildAppBar(context),
           body: CustomScrollView(
             slivers: [
-              // 1. Header con Balances Optimizados
-              SliverToBoxAdapter(
-                child: HomeHeaderBackground(
-                  balance: summary.balance,
-                  income: summary.income,
-                  expense: summary.expense,
-                  spentPercentage: summary.percentage,
-                  transactions: transactions,
-                ),
+              _buildSliverAppBar(
+                context,
+                balance: summary.balance,
+                income: summary.income,
+                expense: summary.expense,
+                spentPercentage: summary.percentage,
+                transactions: transactions,
               ),
-
               // 2. Bloques Condicionales de Bienvenida
               if (_welcomeVdeoCardShown)
                 const SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -310,14 +306,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
               // const SliverToBoxAdapter(child: FinancialHealthCard()),
               // const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                  ),
-                  child: TarjetaPrevisualizacionDeudas()
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: TarjetaPrevisualizacionDeudas(),
                 ),
               ),
               if (_welcomeSummaryCardShown) ...[
@@ -334,8 +327,8 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                   padding: EdgeInsets.only(top: 16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(7),
-                    color: AppThemeHSL.surfaceLight
-                    ),
+                    color: AppThemeHSL.surfaceLight,
+                  ),
                   child: Stack(
                     alignment: .centerLeft,
                     children: [
@@ -395,7 +388,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               //           setState(() => _isShowingTransactions = val),
               //     ),
               //   ),
-              
+
               //   // const SliverToBoxAdapter(child: SizedBox(height: 8)),
               //   _buildSliverList(
               //     isShowingTransactions: _isShowingTransactions,
@@ -458,6 +451,60 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   }
 
   // --- SUBWIDGETS Y MÉTODOS EXTRACTOS PARA LEGIBILIDAD ---
+  Widget _buildSliverAppBar(
+    BuildContext context, {
+    required double balance,
+    required double income,
+    required double expense,
+    required double spentPercentage,
+    required List<Transaction> transactions,
+  }) {
+    final appNotifications = ref.watch(notificationsProvider);
+    int notifCount = appNotifications.length;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+
+    return SliverAppBar(
+      backgroundColor:
+          Colors.transparent, // Fondo transparente para ver el header
+      title: ColorizeNamesWidget(
+        names: const ['Arees', 'Tu Finanzas', 'Tu Futuro', ' F i n x U p'],
+        colors: [
+          AppThemeHSL.textPrimary,
+          AppThemeHSL.primary,
+          AppThemeHSL.accentGold,
+          AppThemeHSL.income,
+        ],
+        fontSize: 16,
+      ),
+      centerTitle: true,
+      leading: _buildAppBarLeading(context),
+      actions: _buildAppBarActions(appNotifications, notifCount),
+
+      expandedHeight: 184 + kToolbarHeight + statusBarHeight, // Altura total
+      collapsedHeight: kToolbarHeight + statusBarHeight,
+      floating: true,
+      pinned: false,
+
+      flexibleSpace: FlexibleSpaceBar(
+        background: Column(
+          children: [
+            SizedBox(
+              height: kToolbarHeight + statusBarHeight,
+            ), // Espacio para el AppBar
+            Expanded(
+              child: HomeHeaderBackground(
+                balance: balance,
+                income: income,
+                expense: expense,
+                spentPercentage: spentPercentage,
+                transactions: transactions,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final appNotifications = ref.watch(notificationsProvider);
@@ -833,8 +880,7 @@ class HomeHeaderBackground extends StatelessWidget {
           ),
         ],
       ),
-      child: SafeArea(
-        child: Padding(
+      child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -961,7 +1007,6 @@ class HomeHeaderBackground extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

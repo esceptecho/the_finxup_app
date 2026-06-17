@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/finxup_files/mock-trans-expanders/expansion_finance_insight_panel_.dart';
 import 'package:the_finxup_app/models/bill.dart';
+import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
+import 'package:the_finxup_app/providers/debt_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
 import 'package:the_finxup_app/widgets/bill_card.dart';
 import 'package:the_finxup_app/widgets/calendar_goal_card.dart';
+import 'package:the_finxup_app/widgets/debt_card_item.dart';
 import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/transactions_card.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -87,12 +90,6 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
                             child: Column(
                               children: [
                                 ListTile(),
-                                Text('Total de eventos: ${eventMap.length}'),
-                                Text('Total de eventos: ${eventMap.length}'),
-                                Text('Total de eventos: ${eventMap.length}'),
-                                Text('Total de eventos: ${eventMap.length}'),
-                                Text('Total de eventos: ${eventMap.length}'),
-                                Text('Total de eventos: ${eventMap.length}'),
                               ],
                             ),
                           ),
@@ -343,6 +340,23 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: CalendarGoalCard(goal: event),
+          );
+        }if (event is Debt) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: DebtCardItem(
+              debt: event,
+              onCheckChanged: () {
+                ref
+                    .read(debtListProvider.notifier)
+                    .togglePagado(event.id); // Usar event.id en lugar de index
+              },
+              onDelete: () {
+                ref
+                    .read(debtListProvider.notifier)
+                    .deleteDebt(event.id); // Usar event.id en lugar de index
+              },
+            ),
           );
         }
         return const SizedBox();

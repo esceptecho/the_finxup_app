@@ -124,7 +124,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppThemeHSL.background,
-                  
+
                   // Colors.white.withValues(
                   //   alpha: 0.03,
                   // ), // Un fondo sutil para dar contexto de tarjeta
@@ -220,7 +220,12 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                                   if (newValue != null) {
                                     // 4. AQUÍ PASAMOS EL FILTRO AL PROVIDER:
                                     // Al modificar el .state, notificamos a toda la app del cambio de moneda.
-                                    ref.read(selectedCurrencyProvider.notifier,).state = newValue;
+                                    ref
+                                            .read(
+                                              selectedCurrencyProvider.notifier,
+                                            )
+                                            .state =
+                                        newValue;
                                   }
                                 },
                               );
@@ -336,12 +341,12 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                           onCheckChanged: () {
                             ref
                                 .read(debtListProvider.notifier)
-                                .togglePagado(index);
+                                .togglePagado(debt.id);
                           },
                           onDelete: () {
                             ref
                                 .read(debtListProvider.notifier)
-                                .deleteDebt(index);
+                                .deleteDebt(debt.id);
                           },
                         );
                       },

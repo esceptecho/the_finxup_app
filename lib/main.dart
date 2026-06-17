@@ -78,7 +78,9 @@ if (!Hive.isAdapterRegistered(7)) {
     Hive.registerAdapter(DebtAdapter());
   }
 
-  
+  if (!Hive.isAdapterRegistered(17)) {
+    Hive.registerAdapter(DebtPaymentAdapter());
+  }
 }
 
 Future<void> _openHiveBoxes() async {

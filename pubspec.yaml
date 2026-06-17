@@ -69,6 +69,7 @@ dependencies:
   visibility_detector: ^0.4.0+2
   curved_navigation_bar: ^1.0.6
   liquid_swipe: ^3.1.0
+  flutter_spinkit: ^5.2.2
 
 dev_dependencies:
   build_runner: ^2.4.13

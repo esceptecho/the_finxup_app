@@ -18,7 +18,6 @@ class DebtListNotifier extends Notifier<List<Debt>> {
 
   @override
   List<Debt> build() {
-    // Usamos watch en lugar de read
     _repository = ref.watch(debtRepositoryProvider);
     return _repository.getAllDebts();
   }
@@ -28,16 +27,33 @@ class DebtListNotifier extends Notifier<List<Debt>> {
     state = _repository.getAllDebts();
   }
 
-  Future<void> togglePagado(int index) async {
-    final debt = state[index];
-    final updatedDebt = debt.copyWith(pagado: !debt.pagado);
-    await _repository.updateDebt(index, updatedDebt);
+  // --- ¡NUEVO MÉTODO AGREGADO AQUÍ! ---
+  // Este es el método que le hacía falta a tu DebtDetailScreen
+  Future<void> updateDebt(Debt updatedDebt) async {
+    await _repository.updateDebt(updatedDebt.id, updatedDebt);
+    state = _repository
+        .getAllDebts(); // Notifica a la app para redibujar los cambios
+  }
+
+  // Método actualizado para usar ID en lugar de índice
+  Future<void> togglePagado(String id) async {
+    final debt = _repository.getDebtById(id);
+    if (debt != null) {
+      final updatedDebt = debt.copyWith(pagado: !debt.pagado);
+      await _repository.updateDebt(id, updatedDebt);
+      state = _repository.getAllDebts();
+    }
+  }
+
+  // Método actualizado para eliminar por ID
+  Future<void> deleteDebt(String id) async {
+    await _repository.deleteDebt(id);
     state = _repository.getAllDebts();
   }
 
-  Future<void> deleteDebt(int index) async {
-    await _repository.deleteDebt(index);
-    state = _repository.getAllDebts();
+  // Método auxiliar para obtener deuda por ID
+  Debt? getDebtById(String id) {
+    return _repository.getDebtById(id);
   }
 }
 
@@ -45,7 +61,6 @@ class DebtListNotifier extends Notifier<List<Debt>> {
 final debtSearchQueryProvider = StateProvider<String>((ref) {
   return '';
 });
-
 
 // 1. Provider para almacenar la moneda seleccionada actualmente
 final selectedCurrencyProvider = StateProvider<CurrencyType>((ref) {
@@ -81,6 +96,35 @@ final balanceProvider = Provider<double>((ref) {
   final totalPrestamos = ref.watch(totalPrestamosProvider);
   final totalDeudas = ref.watch(totalDeudasProvider);
 
-  // Puedes cambiar el orden de la resta según consideres un balance positivo o negativo
   return totalPrestamos - totalDeudas;
 });
+
+
+
+// class DebtListNotifier extends Notifier<List<Debt>> {
+//   late DebtRepository _repository;
+
+//   @override
+//   List<Debt> build() {
+//     // Usamos watch en lugar de read
+//     _repository = ref.watch(debtRepositoryProvider);
+//     return _repository.getAllDebts();
+//   }
+
+//   Future<void> addDebt(Debt debt) async {
+//     await _repository.addDebt(debt);
+//     state = _repository.getAllDebts();
+//   }
+
+//   Future<void> togglePagado(int index) async {
+//     final debt = state[index];
+//     final updatedDebt = debt.copyWith(pagado: !debt.pagado);
+//     await _repository.updateDebt(index, updatedDebt);
+//     state = _repository.getAllDebts();
+//   }
+
+//   Future<void> deleteDebt(int index) async {
+//     await _repository.deleteDebt(index);
+//     state = _repository.getAllDebts();
+//   }
+// }

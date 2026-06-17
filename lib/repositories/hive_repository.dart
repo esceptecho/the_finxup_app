@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:the_finxup_app/models/bill.dart';
+import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/models/goal.dart';
+import 'package:the_finxup_app/providers/debt_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/utils/transaction_utils.dart';
 import 'package:time_machine/time_machine.dart';
@@ -129,6 +131,7 @@ final calendarEventsProvider =
       final txsAsync = ref.watch(transactionListNotifierProvider);
       final billsAsync = ref.watch(billListNotifierProvider);
       final goalsAsync = ref.watch(goalListNotifierProvider);
+      final debts = ref.watch(debtListProvider);
 
       // Combinamos los 3 providers
       if (txsAsync is AsyncData &&
@@ -156,10 +159,110 @@ final calendarEventsProvider =
           _projectBillOccurrences(bill, eventMap);
         }
 
+        // 4. Añadir Debts (Deudas) - fecha de pago sugerida o próxima cuota
+        for (var debt in debts) {
+          _addDebtToEventMap(debt, eventMap);
+        }
+
         return AsyncValue.data(eventMap);
       }
       return const AsyncValue.loading();
     });
+    
+// Función auxiliar para añadir deudas al mapa de eventos
+void _addDebtToEventMap(Debt debt, Map<DateTime, List<dynamic>> map) {
+  // 1. Agregar la deuda en su fecha de registro original
+  final registroDate = DateUtils.dateOnly(debt.fecha);
+  if (!debt.pagado || debt.montoRestante > 0) {
+    map.putIfAbsent(registroDate, () => []).add(debt);
+  }
+
+  // 2. Si tiene fecha de vencimiento, mostrar en el calendario
+  if (debt.fechaVencimiento != null && !debt.pagado) {
+    final vencimientoDate = DateUtils.dateOnly(debt.fechaVencimiento!);
+
+    // Crear una copia especial para mostrar en el calendario con estado "vencimiento"
+    final debtCopy = debt.copyWith(
+      nombre: '${debt.nombre} (Vence)',
+      descripcion:
+          debt.descripcion ?? 'Vence: ${_formatDate(debt.fechaVencimiento!)}',
+    );
+
+    map.putIfAbsent(vencimientoDate, () => []).add(debtCopy);
+  }
+
+  // 3. Si tiene fecha de recordatorio específica
+  if (debt.fechaRecordatorio != null && !debt.pagado) {
+    final recordatorioDate = DateUtils.dateOnly(debt.fechaRecordatorio!);
+    final reminderCopy = debt.copyWith(
+      nombre: '🔔 Recordatorio: ${debt.nombre}',
+    );
+    map.putIfAbsent(recordatorioDate, () => []).add(reminderCopy);
+  }
+
+  // 4. Proyectar cuotas recurrentes si tiene número de cuotas y no está pagada
+  if (debt.numeroCuotas != null &&
+      debt.numeroCuotas! > 0 &&
+      !debt.pagado &&
+      debt.fechaVencimiento != null) {
+    _projectDebtInstallments(debt, map);
+  }
+}
+
+// Función auxiliar para proyectar cuotas de deuda
+void _projectDebtInstallments(Debt debt, Map<DateTime, List<dynamic>> map) {
+  final startDate = debt.fecha;
+  final totalCuotas = debt.numeroCuotas!;
+  final cuotasPagadas = debt.cuotasPagadas ?? 0;
+  final montoPorCuota = debt.cantidad / totalCuotas;
+
+  LocalDate current = LocalDate.dateTime(DateUtils.dateOnly(startDate));
+  final limit = LocalDate.today().add(Period(days: 730)); // 2 años máximo
+
+  int cuotaNumero = 1;
+
+  while (current <= limit && cuotaNumero <= totalCuotas) {
+    // Solo mostrar cuotas futuras o pendientes
+    if (cuotaNumero > cuotasPagadas) {
+      final cuotaDate = current.toDateTimeUnspecified();
+      final estadoPago = cuotaNumero <= cuotasPagadas ? 'Pagada' : 'Pendiente';
+
+      // Crear objeto para mostrar en calendario
+      final cuotaInfo = {
+        'tipo': 'cuota_deuda',
+        'deudaOriginal': debt,
+        'cuotaNumero': cuotaNumero,
+        'totalCuotas': totalCuotas,
+        'monto': montoPorCuota,
+        'estado': estadoPago,
+        'nombre': 'Cuota $cuotaNumero/$totalCuotas: ${debt.nombre}',
+      };
+
+      map.putIfAbsent(cuotaDate, () => []).add(cuotaInfo);
+    }
+
+    // Avanzar según el tipo de recurrencia
+    if (debt.recurrenceType == RecurrenceType.weekly) {
+      current = current.add(Period(days: 7));
+    } else if (debt.recurrenceType == RecurrenceType.biweekly) {
+      current = current.add(Period(days: 14));
+    } else if (debt.recurrenceType == RecurrenceType.monthly) {
+      current = current.add(Period(months: 1));
+    } else if (debt.recurrenceType == RecurrenceType.quarterly) {
+      current = current.add(Period(months: 3));
+    } else if (debt.recurrenceType == RecurrenceType.yearly) {
+      current = current.add(Period(years: 1));
+    } else {
+      current = current.add(Period(months: 1)); // Default mensual
+    }
+
+    cuotaNumero++;
+  }
+}
+
+String _formatDate(DateTime date) {
+  return '${date.day}/${date.month}/${date.year}';
+}
 
 // Función auxiliar para proyectar fechas futuras
 void _projectBillOccurrences(Bill bill, Map<DateTime, List<dynamic>> map) {
