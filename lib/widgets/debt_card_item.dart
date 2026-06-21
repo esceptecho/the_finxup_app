@@ -235,10 +235,11 @@ class DebtCardItem extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // FILA INFERIOR: Información detallada
-                Wrap(
+                Row(
                   spacing: 12,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // runSpacing: 8,
+                  // alignment: WrapAlignment.spaceBetween,
                   children: [
                     // Icono de dirección (Debo/Me deben)
                     Row(

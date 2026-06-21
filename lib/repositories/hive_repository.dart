@@ -126,47 +126,85 @@ final billListNotifierProvider =
 // ########## Este provider escuchará a ambos y devolverá un objeto que el calendario pueda entender ##########
 // Este provider combina ambos AsyncNotifiers
 // Va a leer Transactions, Bills (y proyectar sus recurrencias) y Goals.
-final calendarEventsProvider =
-    Provider<AsyncValue<Map<DateTime, List<dynamic>>>>((ref) {
-      final txsAsync = ref.watch(transactionListNotifierProvider);
-      final billsAsync = ref.watch(billListNotifierProvider);
-      final goalsAsync = ref.watch(goalListNotifierProvider);
+final calendarEventsProvider = Provider<AsyncValue<Map<DateTime, List<dynamic>>>>(
+  (ref) {
+    final txsAsync = ref.watch(transactionListNotifierProvider);
+    final billsAsync = ref.watch(billListNotifierProvider);
+    final goalsAsync = ref.watch(goalListNotifierProvider);
+    final debtsAsync = ref.watch(
+      debtListProvider,
+    ); // Manejo preventivo asíncrono
+
+    // Desempaquetamos de forma segura asegurando que todo tenga datos cargados
+    if (txsAsync is AsyncData &&
+        billsAsync is AsyncData &&
+        goalsAsync is AsyncData &&
+        debtsAsync is AsyncData) {
+      final Map<DateTime, List<dynamic>> eventMap = {};
+
+      final transactions = txsAsync.value!;
+      final bills = billsAsync.value!;
+      final goals = goalsAsync.value!;
+      final debts = debtsAsync; // Si tu provider actual ya es síncrono, remueve el ".value!"
+
+      for (var goal in goals) {
+        final date = DateUtils.dateOnly(goal.targetDate);
+        eventMap.putIfAbsent(date, () => []).add(goal);
+      }
+
+      for (var transaction in transactions) {
+        _projectTransactionOccurrences(transaction, eventMap);
+      }
+
+      for (var bill in bills) {
+        _projectBillOccurrences(bill, eventMap);
+      }
+
+      for (var debt in debts) {
+        _addDebtToEventMap(debt, eventMap);
+      }
+
+      return AsyncValue.data(eventMap);
+    }
+    return const AsyncValue.loading();
+  },
+);
+
+// Crea un NUEVO FutureProvider para la pantalla del calendario
+final calendarEventsFutureProvider =
+    FutureProvider<Map<DateTime, List<dynamic>>>((ref) async {
+      // Esperar a que todos los providers tengan datos
+      final transactions = await ref.watch(transactionListNotifierProvider.future);
+      final bills = await ref.watch(billListNotifierProvider.future);
+      final goals = await ref.watch(goalListNotifierProvider.future);
+      
+      // debts es síncrono, lo leemos directamente
       final debts = ref.watch(debtListProvider);
 
-      // Combinamos los 3 providers
-      if (txsAsync is AsyncData &&
-          billsAsync is AsyncData &&
-          goalsAsync is AsyncData) {
-        final Map<DateTime, List<dynamic>> eventMap = {};
+      final Map<DateTime, List<dynamic>> eventMap = {};
 
-        final transactions = txsAsync.value!;
-        final bills = billsAsync.value!;
-        final goals = goalsAsync.value!;
-
-        // 2. Añadir Metas (Goals) - Usualmente por su fecha límite
-        for (var goal in goals) {
-          // Asumiendo que tu modelo Goal tiene un campo targetDate
-          final date = DateUtils.dateOnly(goal.targetDate);
-          eventMap.putIfAbsent(date, () => []).add(goal);
-        }
-
-        // 3. Proyectar Transactions y Bills según su Recurrencia
-        for (var transaction in transactions) {
-          _projectTransactionOccurrences(transaction, eventMap);
-        }
-
-        for (var bill in bills) {
-          _projectBillOccurrences(bill, eventMap);
-        }
-
-        // 4. Añadir Debts (Deudas) - fecha de pago sugerida o próxima cuota
-        for (var debt in debts) {
-          _addDebtToEventMap(debt, eventMap);
-        }
-
-        return AsyncValue.data(eventMap);
+      // Procesar goals
+      for (var goal in goals) {
+        final date = DateUtils.dateOnly(goal.targetDate);
+        eventMap.putIfAbsent(date, () => []).add(goal);
       }
-      return const AsyncValue.loading();
+
+      // Procesar transactions
+      for (var transaction in transactions) {
+        _projectTransactionOccurrences(transaction, eventMap);
+      }
+
+      // Procesar bills
+      for (var bill in bills) {
+        _projectBillOccurrences(bill, eventMap);
+      }
+
+      // Procesar debts
+      for (var debt in debts) {
+        _addDebtToEventMap(debt, eventMap);
+      }
+
+      return eventMap;
     });
     
 // Función auxiliar para añadir deudas al mapa de eventos
@@ -210,7 +248,7 @@ void _addDebtToEventMap(Debt debt, Map<DateTime, List<dynamic>> map) {
 }
 
 // Función auxiliar para proyectar cuotas de deuda
-void _projectDebtInstallments(Debt debt, Map<DateTime, List<dynamic>> map) {
+void _projectDebtInstallments(Debt debt, Map<DateTime, List<dynamic>> map) { 
   final startDate = debt.fecha;
   final totalCuotas = debt.numeroCuotas!;
   final cuotasPagadas = debt.cuotasPagadas ?? 0;
@@ -337,60 +375,6 @@ void _projectTransactionOccurrences(
   }
 }
 
-// Función auxiliar antigua para proyectar fechas futuras
-// void _projectBillOccurrences(Bill bill, Map<DateTime, List<dynamic>> map) {
-
-//   DateTime current = DateUtils.dateOnly(bill.dueDate);
-//   // Proyectamos, por ejemplo, 6 meses hacia adelante
-//   DateTime limit = DateTime.now().add(const Duration(days: 365));
-
-//   if (bill.recurrence == 'Única vez') {
-//     map.putIfAbsent(current, () => []).add(bill);
-//     return;
-//   }
-
-//   while (current.isBefore(limit)) {
-//     map.putIfAbsent(current, () => []).add(bill);
-
-//     if (bill.recurrence == 'Diario') {
-//       current = current.add(const Duration(days: 1));
-//     } else if (bill.recurrence == 'Semanal') {
-//       current = current.add(const Duration(days: 7));
-//     } else if (bill.recurrence == 'Mensual') {
-//       current = DateTime(current.year, current.month + 1, current.day);
-//     } else {
-//       break;
-//     }
-//   }
-// }
-
-// void _projectTransactionOccurrences(
-//   Transaction transaction,
-//   Map<DateTime, List<dynamic>> map,
-// ) {
-//   DateTime current = DateUtils.dateOnly(transaction.date);
-//   // Proyectamos, por ejemplo, 6 meses hacia adelante
-//   DateTime limit = DateTime.now().add(const Duration(days: 180));
-
-//   if (transaction.recurrence == 'Única vez') {
-//     map.putIfAbsent(current, () => []).add(transaction);
-//     return;
-//   }
-
-//   while (current.isBefore(limit)) {
-//     map.putIfAbsent(current, () => []).add(transaction);
-
-//     if (transaction.recurrence == 'Diario') {
-//       current = current.add(const Duration(days: 1));
-//     } else if (transaction.recurrence == 'Semanal') {
-//       current = current.add(const Duration(days: 7));
-//     } else if (transaction.recurrence == 'Mensual') {
-//       current = DateTime(current.year, current.month + 1, current.day);
-//     } else {
-//       break;
-//     }
-//   }
-// }
 
 class BillListNotifier extends AsyncNotifier<List<Bill>> {
   @override

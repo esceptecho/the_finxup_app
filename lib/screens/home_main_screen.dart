@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
+import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
 import 'package:the_finxup_app/providers/list_notifier.dart';
 import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';

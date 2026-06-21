@@ -99,32 +99,3 @@ final balanceProvider = Provider<double>((ref) {
   return totalPrestamos - totalDeudas;
 });
 
-
-
-// class DebtListNotifier extends Notifier<List<Debt>> {
-//   late DebtRepository _repository;
-
-//   @override
-//   List<Debt> build() {
-//     // Usamos watch en lugar de read
-//     _repository = ref.watch(debtRepositoryProvider);
-//     return _repository.getAllDebts();
-//   }
-
-//   Future<void> addDebt(Debt debt) async {
-//     await _repository.addDebt(debt);
-//     state = _repository.getAllDebts();
-//   }
-
-//   Future<void> togglePagado(int index) async {
-//     final debt = state[index];
-//     final updatedDebt = debt.copyWith(pagado: !debt.pagado);
-//     await _repository.updateDebt(index, updatedDebt);
-//     state = _repository.getAllDebts();
-//   }
-
-//   Future<void> deleteDebt(int index) async {
-//     await _repository.deleteDebt(index);
-//     state = _repository.getAllDebts();
-//   }
-// }

@@ -37,7 +37,7 @@ class ElegantBanner {
       content: SizedBox(
         height: 110,
         child: ListView.separated(
-          scrollDirection: Axis.horizontal,
+          scrollDirection: Axis.vertical,
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: appNotifications.length,

@@ -10,12 +10,12 @@ class CalendarGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 200, // Ancho fijo para scroll horizontal
-      margin: const EdgeInsets.only(right: 16),
+      width: double.infinity, // Ancho fijo para scroll horizontal
+      // margin: const EdgeInsets.only(right: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppThemeHSL.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(0),
         border: Border.all(color: Colors.white10),
       ),
       child: Column(

@@ -8,6 +8,7 @@ import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/models/welcome_update_videos.dart';
+import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
 import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
 import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
@@ -34,7 +35,9 @@ import 'package:the_finxup_app/widgets/transaction_card.dart';
 import 'package:the_finxup_app/widgets/video_welcome_card.dart';
 
 class EnhancedHomeScreen extends ConsumerStatefulWidget {
-  const EnhancedHomeScreen({super.key});
+  final String? focusGoalId;
+  final String? heroTag;
+  const EnhancedHomeScreen({super.key, this.focusGoalId, this.heroTag});
 
   @override
   ConsumerState<EnhancedHomeScreen> createState() => _EnhancedHomeScreenState();
@@ -51,11 +54,39 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   static const int _hoursThreshold = 6; //Ajustar horas a voluntad
   static const int _hoursVideoThreshold = 3; //Ajustar horas a voluntad
 
+  late final ScrollController _goalsScrollController;
+
   @override
   void initState() {
     super.initState();
     _checkWelcomeStatus();
     _checkWelcomeVideoStatus();
+
+    // Calcular el offset inicial de forma síncrona
+    double initialOffset = 0.0;
+    if (widget.focusGoalId != null) {
+      // Asegúrate de que el provider tenga los datos disponibles aquí.
+      // Si los datos se cargan asíncronamente, el Hero no funcionará hasta que se dibujen.
+      final goals = ref.read(goalListNotifierProvider).value ?? [];
+      final index = goals.indexWhere((g) => g.id == widget.focusGoalId);
+
+      if (index != -1) {
+        final double cardWidth = 200.0; // Tu ancho real
+        initialOffset = index * cardWidth;
+      }
+    }
+
+    // Inicializar el controlador directamente con el offset correcto
+    _goalsScrollController = ScrollController(
+      initialScrollOffset: initialOffset,
+    );
+  }
+
+
+  @override
+  void dispose() {
+    _goalsScrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkWelcomeStatus() async {
@@ -361,6 +392,10 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               SliverToBoxAdapter(
                 child: goalsList.isNotEmpty
                     ? GoalsSection(
+                      scrollController: _goalsScrollController, // <-- Pasamos el controlador creado
+                      focusGoalId: widget.focusGoalId,
+                      heroTag: widget
+                            .heroTag, // <--- 3. DELEGAR EL TAG A LA SECCIÓN
                         goals: goalsList,
                         onAddTap: _openAddGoalModal,
                         onVisibleTap: () =>
@@ -373,74 +408,6 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                       )
                     : _buildEmptyGoalsPlaceholder(),
               ),
-
-              // const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              // // 4. Filtros y Listados dinámicos
-              // if (transactionList.isNotEmpty || billsList.isNotEmpty) ...[
-              //   SliverToBoxAdapter(
-              //     child: Divider(height: 16.0, color: AppThemeHSL.divider),
-              //   ),
-              //   const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              //   SliverToBoxAdapter(
-              //     child: CategoryFilterSelector(
-              //       showTransactions: _isShowingTransactions,
-              //       onChanged: (val) =>
-              //           setState(() => _isShowingTransactions = val),
-              //     ),
-              //   ),
-
-              //   // const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              //   _buildSliverList(
-              //     isShowingTransactions: _isShowingTransactions,
-              //     transactions: transactionList,
-              //     bills: billsList,
-              //   ),
-              // ],
-              // const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              // SliverList(
-              //   delegate: SliverChildBuilderDelegate((context, index) {
-              //     return VisibilityDetector(
-              //       key: Key('item-$index'),
-              //       onVisibilityChanged: (info) {
-              //         if (info.visibleFraction > 0.3) {
-              //           print(
-              //             'Item $index visible en ${(info.visibleFraction * 100).toStringAsFixed(0)}%',
-              //           );
-              //           // Activar Lottie, reproducir video, etc.
-              //         }
-              //       },
-              //       child: Material(
-              //         color: Colors.transparent,
-              //         child: InkWell(
-              //           onTap: () {
-              //             print('Item $index was clicked');
-              //           },
-              //           splashColor: Colors.white.withValues(alpha: 0.2),
-              //           child: SlidableItem(
-              //             onDelete: () {},
-              //             onToggleStatus: () {},
-              //             child: Container(
-              //               height: 150,
-              //               margin: EdgeInsets.all(8),
-              //               color: Colors
-              //                   .primaries[index % Colors.primaries.length],
-              //               child: Center(
-              //                 child: Text(
-              //                   'Item $index',
-              //                   style: TextStyle(
-              //                     color: Colors.white,
-              //                     fontWeight: .w800,
-              //                   ),
-              //                 ),
-              //               ),
-              //             ),
-              //           ),
-              //         ),
-              //       ),
-              //     );
-              //   }, childCount: 50),
-              // ),
-
               // 5. Botón expandible de transacciones
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
@@ -563,13 +530,13 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               : AppThemeHSL.textDisabled,
           child: Icon(Icons.notifications, color: AppThemeHSL.textSecondary),
         ),
-        onLongPress: () {
+        onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const NotifListScreen()),
           );
         },
-        onPressed: () {
+        onLongPress: () {
           // Asumiendo que 'appNotifications' ya viene de un ref.watch(notificationsProvider) en tu build
           if (appNotifications.isNotEmpty) {
             setState(() {

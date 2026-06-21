@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
+import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
 import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/elegant_banner.dart';

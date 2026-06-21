@@ -170,26 +170,35 @@ class _DebtDetailScreenState extends ConsumerState<DebtDetailScreen> {
     );
   }
 
-  void _eliminarPago(int index) {
-    setState(() {
-      final pagosActualizados = List<DebtPayment>.from(_debt.pagosRealizados!);
-      final pagoEliminado = pagosActualizados.removeAt(index);
+  void _eliminarPago(Debt currentDebt, int index) {
+    // Creamos la nueva lista de pagos sin el elemento
+    final pagosActualizados = List<DebtPayment>.from(
+      currentDebt.pagosRealizados!,
+    );
+    final pagoEliminado = pagosActualizados.removeAt(index);
 
-      final nuevoMontoPagado = (_debt.montoPagado ?? 0) - pagoEliminado.monto;
-      final nuevoPagado = nuevoMontoPagado >= _debt.cantidad;
+    final nuevoMontoPagado =
+        (currentDebt.montoPagado ?? 0) - pagoEliminado.monto;
+    final nuevoPagado = nuevoMontoPagado >= currentDebt.cantidad;
 
-      _debt = _debt.copyWith(
-        pagosRealizados: pagosActualizados.isEmpty ? null : pagosActualizados,
-        montoPagado: nuevoMontoPagado,
-        pagado: nuevoPagado,
+    // Creamos la nueva instancia de la deuda
+    var deudaparaActualizar = currentDebt.copyWith(
+      // UX Tip: Usa una lista vacía [] en lugar de null para evitar crashes de lectura
+      pagosRealizados: pagosActualizados.isEmpty ? [] : pagosActualizados,
+      montoPagado: nuevoMontoPagado,
+      pagado: nuevoPagado,
+    );
+
+    if (deudaparaActualizar.numeroCuotas != null &&
+        deudaparaActualizar.numeroCuotas! > 0) {
+      final cuotasActualizadas = (deudaparaActualizar.cuotasPagadas ?? 0) - 1;
+      deudaparaActualizar = deudaparaActualizar.copyWith(
+        cuotasPagadas: cuotasActualizadas,
       );
+    }
 
-      if (_debt.numeroCuotas != null && _debt.numeroCuotas! > 0) {
-        final cuotasActualizadas = (_debt.cuotasPagadas ?? 0) - 1;
-        _debt = _debt.copyWith(cuotasPagadas: cuotasActualizadas);
-      }
-    });
-    ref.read(debtListProvider.notifier).updateDebt(_debt);
+    // Actualizamos el provider directamente. Riverpod se encargará de redibujar la UI limpiamente.
+    ref.read(debtListProvider.notifier).updateDebt(deudaparaActualizar);
   }
 
   void _guardarEdicion() {
@@ -232,6 +241,9 @@ class _DebtDetailScreenState extends ConsumerState<DebtDetailScreen> {
       (d) => d.id == widget.debt.id,
       orElse: () => _debt,
     );
+
+    // Si no hay pagos, evitamos que el ListView falle por null
+    // final pagos = _debt.pagosRealizados ?? [];
 
     final colorElement = _debt.esDeuda ? Colors.redAccent : Colors.greenAccent;
     final porcentaje = _debt.porcentajePagado;
@@ -666,7 +678,7 @@ class _DebtDetailScreenState extends ConsumerState<DebtDetailScreen> {
                     ),
                   );
                 },
-                onDismissed: (_) => _eliminarPago(index),
+                onDismissed: (_) => _eliminarPago(_debt, index),
                 child: ListTile(
                   leading: CircleAvatar(
                     radius: 20,

@@ -9,8 +9,9 @@ import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/utils/string_extensions.dart';
 import 'package:the_finxup_app/widgets/build_summary_item.dart';
 import 'package:the_finxup_app/widgets/build_ui_debt_overlay.dart';
-import 'package:the_finxup_app/widgets/debt_card_item.dart';
+// import 'package:the_finxup_app/widgets/debt_card_item.dart';
 import 'package:the_finxup_app/widgets/debt_consumer_list_table_dialog.dart';
+import 'package:the_finxup_app/widgets/ds_debt_card_item.dart';
 
 class DebtAgendaView extends ConsumerStatefulWidget {
   const DebtAgendaView({super.key});
@@ -69,12 +70,12 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
     final bool isKeyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     // 1. Obtenemos todas las deudas y el texto de búsqueda actual
-    final moneda = ref.watch(selectedCurrencyProvider);
+    // final moneda = ref.watch(selectedCurrencyProvider);
+    // final balance = ref.watch(balanceProvider);
     final totalDeudas = ref.watch(totalDeudasProvider);
     final totalDeudasCantidad = CurrencyFormatter.formatDebt(totalDeudas);
     final totalPrestamos = ref.watch(totalPrestamosProvider);
     final totalPrestamosCantidad = CurrencyFormatter.formatDebt(totalPrestamos);
-    final balance = ref.watch(balanceProvider);
 
     // provider de busqueda
 
@@ -325,6 +326,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                       ),
                     )
                   : ListView.builder(
+                    reverse: true,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 8,
@@ -336,7 +338,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                       itemBuilder: (context, index) {
                         final debt = filteredDebts[index];
 
-                        return DebtCardItem(
+                        return DsDebtCardItem(
                           debt: debt,
                           onCheckChanged: () {
                             ref
@@ -351,6 +353,7 @@ class _DebtAgendaViewState extends ConsumerState<DebtAgendaView> {
                         );
                       },
                     ),
+                    // SizedBox(height: 70),
             ],
           ),
         ),

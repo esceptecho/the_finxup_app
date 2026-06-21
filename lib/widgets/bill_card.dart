@@ -39,13 +39,13 @@ class BillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppThemeHSL.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(0),
         border: Border.all(
-          color: bill.isPaid!
+          color: bill.isPaid
               ? AppThemeHSL.income.withValues(alpha: 0.3)
               : Colors.white10,
         ),

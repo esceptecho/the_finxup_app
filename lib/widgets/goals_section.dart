@@ -5,13 +5,16 @@ import 'package:the_finxup_app/widgets/goal_card.dart';
 // ignore: must_be_immutable
 class GoalsSection extends StatelessWidget {
   final List<Goal> goals;
-  final VoidCallback onAddTap; // <--- Nuevo callback
+  final VoidCallback onAddTap;
   final Function(String) onDelete;
   final Function(Goal) onAddMoney;
   final VoidCallback onVisibleTap;
-  bool isVisible = true;
+  final bool isVisible;
+  final String? focusGoalId;
+  final String? heroTag;
+  final ScrollController? scrollController; // <--- NUEVO
 
-  GoalsSection({
+  const GoalsSection({
     super.key,
     required this.goals,
     required this.onAddTap,
@@ -19,6 +22,9 @@ class GoalsSection extends StatelessWidget {
     required this.onAddMoney,
     required this.isVisible,
     required this.onVisibleTap,
+    this.focusGoalId,
+    this.heroTag,
+    this.scrollController, // <--- NUEVO
   });
 
   @override
@@ -47,19 +53,10 @@ class GoalsSection extends StatelessWidget {
                       icon: const Icon(
                         Icons.add_circle,
                         size: 32,
-                        // color: AppTheme.primaryWine,
                       ),
                       onPressed: onAddTap, // <--- Abre el modal de metas
                     ),
-                    // IconButton(
-                    //   icon: Icon(
-                    //     isVisible
-                    //         ? Icons.visibility_off_outlined
-                    //         : Icons.visibility_outlined,
-                    //     size: 28,
-                    //   ),
-                    //   onPressed: onVisibleTap, // <--- Abre el modal de metas
-                    // ),
+
                   ],
                 ),
                 
@@ -71,17 +68,61 @@ class GoalsSection extends StatelessWidget {
               ? SizedBox(
                   height: 160, // Altura del carrusel
                   child: ListView.builder(
+                    controller:
+                        scrollController, // <--- ASIGNAR EL CONTROLLER AQUÍ
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     scrollDirection: Axis.horizontal,
                     itemCount: goals.length,
                     itemBuilder: (context, index) {
                       final goal = goals[index];
+                      // Opcional: Resaltar sutilmente la tarjeta enfocada
+                      final isFocused = goal.id == focusGoalId;
+                      // 4. Guardamos la tarjeta en una variable
+                      Widget cardChild = GoalCard(goal: goal);
+
+                      // 5. Si coincide con el ID y hay un tag, la envolvemos en el Hero
+                      if (isFocused && heroTag != null) {
+                        cardChild = Hero(
+                          tag: heroTag!,
+                          // Agregamos un flightShuttleBuilder para controlar el renderizado en el aire
+                          flightShuttleBuilder:
+                              (
+                                flightContext,
+                                animation,
+                                flightDirection,
+                                fromHeroContext,
+                                toHeroContext,
+                              ) {
+                                return Material(
+                                  color: Colors.transparent,
+                                  child: toHeroContext.widget,
+                                );
+                              },
+                          // Añadir un Material interno mantiene los estilos de texto intactos durante el viaje
+                          child: Material(
+                            color: Colors.transparent,
+                            child: cardChild,
+                          ),
+                        );
+                      }
+
                       return GestureDetector(
-                        onLongPress: () => onDelete(
-                          goal.id,
-                        ), // <-- Aquí enviamos el ID al padre
+                        onLongPress: () => onDelete(goal.id),
                         onTap: () => onAddMoney(goal),
-                        child: isVisible ? GoalCard(goal: goal) : SizedBox.shrink(),
+                        child: isVisible
+                            ? Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: isFocused
+                                      ? Border.all(
+                                          color: Colors.purpleAccent,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
+                                child: cardChild,
+                              )
+                            : const SizedBox.shrink(),
                       );
                     },
                   ),

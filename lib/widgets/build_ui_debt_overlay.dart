@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -159,24 +158,6 @@ class _BuildUiDebtOverlayState extends ConsumerState<BuildUiDebtOverlay> {
                         ),
                         const PopupMenuDivider(),
                         PopupMenuItem(
-                          value: DebtFilter.esDeuda,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.arrow_downward,
-                                color: AppThemeHSL.expenseLight,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Por Pagar (Debes)",
-                                style: TextStyle(
-                                  color: AppThemeHSL.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        PopupMenuItem(
                           value: DebtFilter.porCobrar,
                           child: Row(
                             children: [
@@ -195,6 +176,25 @@ class _BuildUiDebtOverlayState extends ConsumerState<BuildUiDebtOverlay> {
                           ),
                         ),
                         PopupMenuItem(
+                          value: DebtFilter.esDeuda,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.arrow_downward,
+                                color: AppThemeHSL.expenseLight,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Por Pagar (Debes)",
+                                style: TextStyle(
+                                  color: AppThemeHSL.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        PopupMenuItem(
                           value: DebtFilter.pagado,
                           child: Row(
                             children: [
@@ -205,6 +205,79 @@ class _BuildUiDebtOverlayState extends ConsumerState<BuildUiDebtOverlay> {
                               const SizedBox(width: 10),
                               Text(
                                 "Completadas / Pagadas",
+                                style: TextStyle(
+                                  color: AppThemeHSL.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // debido al reverse: true en el ListView.builder de DebtAgendaView
+                        PopupMenuItem(
+                          value: DebtFilter.menorPrestamo,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.trending_up,
+                                color: AppThemeHSL.incomeLight,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Más alta (inicial)",
+                                style: TextStyle(
+                                  color: AppThemeHSL.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: DebtFilter.mayorPrestamo,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.trending_down,
+                                color: AppThemeHSL.expenseLight,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Más baja (inicial)",
+                                style: TextStyle(
+                                  color: AppThemeHSL.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: DebtFilter.menorRestante,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.payments_rounded,
+                                color: AppThemeHSL.incomeLight,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Más alta (restante)",
+                                style: TextStyle(
+                                  color: AppThemeHSL.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: DebtFilter.mayorRestante,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.payments_rounded,
+                                color: AppThemeHSL.expenseLight,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Más baja (restante)",
                                 style: TextStyle(
                                   color: AppThemeHSL.textPrimary,
                                 ),

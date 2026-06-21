@@ -79,99 +79,101 @@ class ResumenHistoricoWidget extends ConsumerWidget {
     final gastos = ref.watch(totalGastosHistoricosProvider);
     final balance = ref.watch(balanceHistoricoProvider);
 
-    return Column(
-      children: [
-        // Balance general (tarjeta más grande)
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(right: 12, left: 12, top: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppThemeHSL.surfaceMid, AppThemeHSL.surfaceLighter]
+    return SafeArea(
+      child: Column(
+        children: [
+          // Balance general (tarjeta más grande)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(right: 12, left: 12, top: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppThemeHSL.surfaceMid, AppThemeHSL.surfaceLighter]
+              ),
+              borderRadius: BorderRadius.circular(7),
+              // boxShadow: [
+                // BoxShadow(
+                //   color: (balance >= 0 ? Colors.teal : Colors.red).withValues(
+                //     alpha: 0.3,
+                //   ),
+                //   blurRadius: 10,
+                //   offset: const Offset(0, 5),
+                // ),
+              // ],
             ),
-            borderRadius: BorderRadius.circular(7),
-            // boxShadow: [
-              // BoxShadow(
-              //   color: (balance >= 0 ? Colors.teal : Colors.red).withValues(
-              //     alpha: 0.3,
-              //   ),
-              //   blurRadius: 10,
-              //   offset: const Offset(0, 5),
-              // ),
-            // ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    balance >= 0 ? Icons.trending_up : Icons.trending_down,
-                    color: balance >= 0 ? AppThemeHSL.income : AppThemeHSL.expense,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'BALANCE HISTÓRICO',
-                    style: TextStyle(
-                      color:AppThemeHSL.textSecondary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      balance >= 0 ? Icons.trending_up : Icons.trending_down,
+                      color: balance >= 0 ? AppThemeHSL.income : AppThemeHSL.expense,
+                      size: 28,
                     ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'BALANCE HISTÓRICO',
+                      style: TextStyle(
+                        color:AppThemeHSL.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '\$${balance.abs().toStringAsFixed(2)}',
+                  style: TextStyle(
+                    color: balance >= 0
+                        ? AppThemeHSL.income
+                        : AppThemeHSL.expense,
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '\$${balance.abs().toStringAsFixed(2)}',
-                style: TextStyle(
-                  color: balance >= 0
-                      ? AppThemeHSL.income
-                      : AppThemeHSL.expense,
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-              Text(
-                balance >= 0 ? 'A favor' : 'En contra',
-                style: TextStyle(
-                  color: AppThemeHSL.textSecondary.withValues(alpha: 0.8),
-                  fontSize: 14,
+                Text(
+                  balance >= 0 ? 'A favor' : 'En contra',
+                  style: TextStyle(
+                    color: AppThemeHSL.textSecondary.withValues(alpha: 0.8),
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-
-        const SizedBox(height: 4),
-
-        // Ingresos y Gastos lado a lado
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: ResumenCard(
-                  titulo: 'INGRESOS',
-                  monto: ingresos,
-                  color: AppThemeHSL.surfaceLighter,
-                  icon: Icons.arrow_downward,
+      
+          const SizedBox(height: 4),
+      
+          // Ingresos y Gastos lado a lado
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ResumenCard(
+                    titulo: 'INGRESOS',
+                    monto: ingresos,
+                    color: AppThemeHSL.surfaceLighter,
+                    icon: Icons.arrow_downward,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ResumenCard(
-                  titulo: 'GASTOS',
-                  monto: gastos,
-                  color: AppThemeHSL.surfaceLighter,
-                  icon: Icons.arrow_upward,
+                Expanded(
+                  child: ResumenCard(
+                    titulo: 'GASTOS',
+                    monto: gastos,
+                    color: AppThemeHSL.surfaceLighter,
+                    icon: Icons.arrow_upward,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

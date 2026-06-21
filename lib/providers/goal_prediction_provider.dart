@@ -5,9 +5,9 @@ import 'package:the_finxup_app/repositories/hive_repository.dart';
 
 class GoalPrediction {
   final String goalName;
-  final String category; // ej: 'Café', 'Suscripciones'
-  final double monthlyExpense; // €/mes que se gasta en esa categoría
-  final int monthsNeeded; // meses para alcanzar la meta
+  final String category;
+  final double monthlyExpense;
+  final int monthsNeeded;
 
   GoalPrediction({
     required this.goalName,
@@ -16,31 +16,37 @@ class GoalPrediction {
     required this.monthsNeeded,
   });
 
-  // Getter en lugar de campo
+  // Clave única para identificar esta predicción de forma inequívoca
+  String get uniqueKey => '$goalName-$category';
+
   String get message {
     if (monthsNeeded <= 0) {
       return '¡Ya tienes suficiente para "$goalName" si rediriges ese gasto!';
     }
-    return 'Si dejas de gastar ${monthlyExpense.toStringAsFixed(0)} €/mes en $category, alcanzarás "$goalName" en $monthsNeeded meses.';
+    return 'Si dejas de gastar ${monthlyExpense.toStringAsFixed(0)} €/mes en $category, alcanzarás "$goalName" en $monthsNeeded meses.';
   }
 }
 
 final goalPredictionProvider = Provider<List<GoalPrediction>>((ref) {
-  // 1. Escuchamos el provider que REALMENTE tiene las transacciones de Hive
-  final transactionsAsync = ref.watch(transactionListNotifierProvider);
-  final transactions = transactionsAsync.value ?? [];
-
-  // 2. Escuchamos las metas
-  final goalsAsync = ref.watch(goalListNotifierProvider);
-  final goals = goalsAsync.value ?? [];
-
-  print('--- Debug Predicciones ---');
-  print('Transacciones totales: ${transactions.length}');
-  print('Metas encontradas: ${goals.length}');
+  final transactions = ref.watch(transactionListNotifierProvider).value ?? [];
+  final goals = ref.watch(goalListNotifierProvider).value ?? [];
+  final deletedPredictions = ref.watch(deletedPredictionsProvider);
 
   if (transactions.isEmpty || goals.isEmpty) return [];
 
-  if (transactions.isEmpty || goals.isEmpty) return [];
+  // OPTIMIZACIÓN: Pre-filtrar transacciones por fecha y tipo UNA sola vez
+  final now = DateTime.now();
+  final cutoffDate = DateTime(now.year, now.month - 3 + 1, 1);
+
+  final validExpenses = transactions
+      .where(
+        (t) =>
+            t.type == TransactionType.expense &&
+            !t.date.isBefore(
+              cutoffDate,
+            ), // Evita problemas de exclusión estricta de .isAfter
+      )
+      .toList();
 
   final cuttableCategories = {
     ExpenseSubCategory.clothing,
@@ -59,17 +65,25 @@ final goalPredictionProvider = Provider<List<GoalPrediction>>((ref) {
   List<GoalPrediction> predictions = [];
 
   for (final category in cuttableCategories) {
-    // Calculamos el promedio directamente aquí para que sea reactivo
-    final monthlyExpense = _calculateAverage(transactions, category, 3);
-
+    // Calculamos el promedio usando el set ya pre-filtrado
+    final monthlyExpense = _calculateAverageFromFiltered(
+      validExpenses,
+      category,
+      3,
+    );
     if (monthlyExpense <= 0) continue;
-    if (monthlyExpense > 0) {
-      print(
-        'Categoría recortable detectada: ${category.name} con gasto de $monthlyExpense',
-      );
-    }
 
     for (final goal in goals) {
+      final tempPrediction = GoalPrediction(
+        goalName: goal.title,
+        category: category.name,
+        monthlyExpense: monthlyExpense,
+        monthsNeeded: 0, // Se recalcula abajo
+      );
+
+      // Comprobamos si fue eliminada usando su propiedad única
+      if (deletedPredictions.contains(tempPrediction.uniqueKey)) continue;
+
       final remaining = goal.targetAmount - goal.currentAmount;
       if (remaining <= 0) continue;
 
@@ -78,7 +92,6 @@ final goalPredictionProvider = Provider<List<GoalPrediction>>((ref) {
       predictions.add(
         GoalPrediction(
           goalName: goal.title,
-          // Usamos .name para evitar que salga "ExpenseSubCategory.coffee"
           category: category.name,
           monthlyExpense: monthlyExpense,
           monthsNeeded: monthsNeeded,
@@ -87,28 +100,36 @@ final goalPredictionProvider = Provider<List<GoalPrediction>>((ref) {
     }
   }
 
-  // Ordenar por las metas más próximas a cumplirse
   predictions.sort((a, b) => a.monthsNeeded.compareTo(b.monthsNeeded));
   return predictions;
 });
 
-// Función auxiliar pura (fuera de la clase si quieres)
-double _calculateAverage(
-  List<Transaction> transactions,
+// Función auxiliar optimizada
+double _calculateAverageFromFiltered(
+  List<Transaction> filteredTransactions,
   ExpenseSubCategory sub,
   int months,
 ) {
-  final now = DateTime.now();
-  final cutoffDate = DateTime(now.year, now.month - months + 1, 1);
-
-  final totalInPeriod = transactions
-      .where(
-        (t) =>
-            t.type == TransactionType.expense &&
-            t.subCategory == sub &&
-            t.date.isAfter(cutoffDate),
-      )
+  final totalInPeriod = filteredTransactions
+      .where((t) => t.subCategory == sub)
       .fold(0.0, (sum, t) => sum + t.amount);
 
   return totalInPeriod / months;
+}
+
+// --- NOTIFIER PARA DESECHADOS ---
+final deletedPredictionsProvider =
+    NotifierProvider<DeletedPredictionsNotifier, Set<String>>(() {
+      return DeletedPredictionsNotifier();
+    });
+
+class DeletedPredictionsNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => {};
+
+  void deletePrediction(String key) {
+    state = {...state, key};
+  }
+
+  void resetDeleted() => state = {};
 }

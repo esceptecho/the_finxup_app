@@ -119,22 +119,24 @@ enum ExpenseSubCategory {
   @HiveField(24)
   repairs,
   @HiveField(25)
-  savings,
+  restaurant,
   @HiveField(26)
-  services,
+  savings,
   @HiveField(27)
-  shopping,
+  services,
   @HiveField(28)
-  snacks,
+  shopping,
   @HiveField(29)
-  subscription,
+  snacks,
   @HiveField(30)
-  taxes,
+  subscription,
   @HiveField(31)
-  tolls,
+  taxes,
   @HiveField(32)
-  transport,
+  tolls,
   @HiveField(33)
+  transport,
+  @HiveField(34)
   travel,
 }
 

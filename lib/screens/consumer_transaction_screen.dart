@@ -15,7 +15,14 @@ import 'package:the_finxup_app/widgets/transaction_card.dart';
 
 class ConsumerTransactionsScreen extends ConsumerStatefulWidget {
   final bool openAddModal; // Parámetro para abrir el modal automáticamente
-  const ConsumerTransactionsScreen({super.key, this.openAddModal = false});
+  final String? focusBillId; // ¡Recibe el ID desde la navegación!
+  final String? heroTag;
+  const ConsumerTransactionsScreen({
+    super.key,
+    this.openAddModal = false,
+    this.focusBillId,
+    this.heroTag,
+  });
 
   @override
   ConsumerState<ConsumerTransactionsScreen> createState() =>
@@ -30,6 +37,11 @@ class _ConsumerTransactionsScreenState
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool showTAnimatedTextKit = true;
+
+  // 1. Primero, declara el controlador en tu State class
+  // 1. Usar FixedExtentScrollController en lugar del controller genérico
+  late FixedExtentScrollController _wheelController;
+  int _selectedIndex = 0;
 
   // Paleta de colores
   static const Color wineColor = Color(0xFF722F37); // Vino tinto
@@ -48,17 +60,34 @@ class _ConsumerTransactionsScreenState
     );
     _animationController.forward();
 
-    // 2. Abrir modal automáticamente si se solicita
     if (widget.openAddModal) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showAddCardModal(context);
       });
     }
+
+    final billsState = ref.read(billListNotifierProvider);
+    int initialIndex = 0;
+
+    if (widget.focusBillId != null && billsState is AsyncData) {
+      final items = billsState.value;
+      final index =
+          items?.indexWhere((bill) => bill.id == widget.focusBillId) ?? -1;
+
+      if (index != -1) {
+        initialIndex = index;
+        _selectedIndex = index;
+      }
+    }
+
+    // Tu rueda (ListWheelScrollView o similar) se posicionará perfectamente aquí
+    _wheelController = FixedExtentScrollController(initialItem: initialIndex);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _wheelController.dispose(); // Limpieza correcta
     super.dispose();
   }
 
@@ -169,9 +198,6 @@ class _ConsumerTransactionsScreenState
               ),
             ),
           ),
-          // if (_isShowingTransactions)
-          //   _buildExpansionButton(isExpanded),
-          // const SizedBox(height: 24),
         ],
       ),
       // ),
@@ -179,20 +205,6 @@ class _ConsumerTransactionsScreenState
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
-
-  // Widget _buildExpansionButton(bool isExpanded) {
-  //   return TextButton.icon(
-  //     onPressed: () => ref.read(listProvider.notifier).toggleExpansion(),
-  //     icon: Icon(
-  //       isExpanded ? Icons.expand_less : Icons.expand_more,
-  //       color: AppThemeHSL.textDisabled,
-  //     ),
-  //     label: Text(
-  //       isExpanded ? "Mostrar menos" : "Ver más",
-  //       style: TextStyle(color: AppThemeHSL.textDisabled, fontSize: 16),
-  //     ),
-  //   );
-  // }
 
   Widget _buildSummaryCard({
     required double balance,
@@ -204,208 +216,222 @@ class _ConsumerTransactionsScreenState
     final transactionList = ref.watch(filteredTransactionsProvider);
     // final summary = ref.watch(financialSummaryProvider);
     // final percentage = summary.percentage;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [wineColor, darkWineColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(7),
-          boxShadow: [
-            BoxShadow(
-              color: AppThemeHSL.primaryDark.withValues(alpha: 0.2),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [wineColor, darkWineColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Balance Total',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
+            borderRadius: BorderRadius.circular(7),
+            boxShadow: [
+              BoxShadow(
+                color: AppThemeHSL.primaryDark.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Balance Total',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: percentage > 0
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          percentage > 0
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          color: percentage > 0
-                              ? AppThemeHSL.incomeLight
-                              : AppThemeHSL.expenseLight,
-                          size: 16,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          CurrencyFormatter.formatPercentage(percentage),
-                          style: TextStyle(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: percentage > 0
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.black.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            percentage > 0
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
                             color: percentage > 0
                                 ? AppThemeHSL.incomeLight
                                 : AppThemeHSL.expenseLight,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            size: 16,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      CurrencyFormatter.formatAmount(balance),
-                      style: TextStyle(
-                        color: balance > 0
-                            ? AppThemeHSL.incomeLight
-                            : AppThemeHSL.expenseLight,
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  showTAnimatedTextKit
-                      ? Expanded(
-                          child: SizedBox(
-                            height: 70,
-                            child: Column(
-                              mainAxisAlignment: .center,
-                              crossAxisAlignment: .end,
-                              children: [
-                                AnimatedTextKit(
-                                  onTap: () {
-                                    setState(() {
-                                      showTAnimatedTextKit =
-                                          !showTAnimatedTextKit;
-                                    });
-                                  },
-                                  animatedTexts: [
-                                    TypewriterAnimatedText(
-                                      "Tienes ${(billsList.length)} facturas pendientes.",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-                                    TypewriterAnimatedText(
-                                      transactionList.isEmpty
-                                          ? "No hay transacciones"
-                                          : transactionList.length == 1
-                                          ? "${transactionList.length} transacción en total."
-                                          : "${transactionList.length} transacciones en total.",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-                                    TypewriterAnimatedText(
-                                      "${(percentage.toStringAsFixed(2))}% es  tu balance restante.",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-                                    TypewriterAnimatedText(
-                                      "\$${(income)} son el total de ingresos.",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-                                    TypewriterAnimatedText(
-                                      "\$${(expense)} es el total gastado.",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-
-                                    TypewriterAnimatedText(
-                                      "Esconder 👇",
-                                      textStyle: TextStyle(
-                                        color: AppThemeHSL.textSecondary
-                                            .withValues(alpha: 0.9),
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                      speed: const Duration(milliseconds: 100),
-                                    ),
-                                  ],
-                                  isRepeatingAnimation: false,
-                                ),
-                              ],
+                          SizedBox(width: 4),
+                          Text(
+                            CurrencyFormatter.formatPercentage(percentage),
+                            style: TextStyle(
+                              color: percentage > 0
+                                  ? AppThemeHSL.incomeLight
+                                  : AppThemeHSL.expenseLight,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        )
-                      : SizedBox.shrink(),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildSummaryItem(
-                    icon: Icons.arrow_upward,
-                    iconColor: AppThemeHSL.accentGold,
-                    label: 'Gastos',
-                    amount: CurrencyFormatter.formatAmount(expense),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: Colors.white.withValues(alpha: 0.2),
-                  ),
-                  _buildSummaryItem(
-                    icon: Icons.arrow_downward,
-                    iconColor: AppThemeHSL.incomeLight,
-                    label: 'Ingresos',
-                    amount: CurrencyFormatter.formatAmount(income),
-                  ),
-                ],
-              ),
-            ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        CurrencyFormatter.formatAmount(balance),
+                        style: TextStyle(
+                          color: balance > 0
+                              ? AppThemeHSL.incomeLight
+                              : AppThemeHSL.expenseLight,
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    showTAnimatedTextKit
+                        ? Expanded(
+                            child: SizedBox(
+                              height: 70,
+                              child: Column(
+                                mainAxisAlignment: .center,
+                                crossAxisAlignment: .end,
+                                children: [
+                                  AnimatedTextKit(
+                                    onTap: () {
+                                      setState(() {
+                                        showTAnimatedTextKit =
+                                            !showTAnimatedTextKit;
+                                      });
+                                    },
+                                    animatedTexts: [
+                                      TypewriterAnimatedText(
+                                        "Tienes ${(billsList.length)} facturas pendientes.",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        transactionList.isEmpty
+                                            ? "No hay transacciones"
+                                            : transactionList.length == 1
+                                            ? "${transactionList.length} transacción en total."
+                                            : "${transactionList.length} transacciones en total.",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        "${(percentage.toStringAsFixed(2))}% es  tu balance restante.",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        "\$${(income)} son el total de ingresos.",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        "\$${(expense)} es el total gastado.",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+
+                                      TypewriterAnimatedText(
+                                        "Esconder 👇",
+                                        textStyle: TextStyle(
+                                          color: AppThemeHSL.textSecondary
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        speed: const Duration(
+                                          milliseconds: 100,
+                                        ),
+                                      ),
+                                    ],
+                                    isRepeatingAnimation: false,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSummaryItem(
+                      icon: Icons.arrow_upward,
+                      iconColor: AppThemeHSL.accentGold,
+                      label: 'Gastos',
+                      amount: CurrencyFormatter.formatAmount(expense),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    _buildSummaryItem(
+                      icon: Icons.arrow_downward,
+                      iconColor: AppThemeHSL.incomeLight,
+                      label: 'Ingresos',
+                      amount: CurrencyFormatter.formatAmount(income),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -444,6 +470,7 @@ class _ConsumerTransactionsScreenState
     );
   }
 
+  // 2. Método modificado para usar ListWheelScrollView
   Widget _buildItemsList({
     required bool isShowingTransactions,
     required List<Transaction> transactions,
@@ -454,7 +481,7 @@ class _ConsumerTransactionsScreenState
     if (items.isEmpty) {
       return Center(
         child: Column(
-          mainAxisSize: .min,
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
@@ -477,31 +504,98 @@ class _ConsumerTransactionsScreenState
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-      shrinkWrap: true,
-      itemCount: items.length,
-      // ✅ CORRECTO
-      itemBuilder: (context, index) {
-        final item = items[index];
-        if (item is Transaction) {
-          return SlidableItem(
-            onDelete: () async {
-              await Future.delayed(const Duration(milliseconds: 300));
-              _deleteTransaction(item.id);
-            },
-            child: TransactionCard(transaction: item),
-          );
-        } else if (item is Bill) {
-          return SlidableItem(
-            onDelete: () => _deleteBill(item.id),
-            onToggleStatus: () => _markBillAsPaid(item),
-            child: BillCard(bill: item, isPaid: false),
-          );
-        }
-        return null;
+    // 🗑️ SE ELIMINÓ EL BLOQUE DEL 'jumpToItem' DE AQUÍ
+    // (Recuerda mover esa lógica al botón que cambia la categoría)
+
+    return ListWheelScrollView.useDelegate(
+      controller: _wheelController,
+      itemExtent: 170, // Altura de cada item
+      diameterRatio: 1.5,
+      perspective: 0.003,
+      squeeze: 1.0,
+      onSelectedItemChanged: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+        final selectedItem = items[index];
+        print('Item seleccionado: $selectedItem');
       },
+      childDelegate: ListWheelChildBuilderDelegate(
+        builder: (context, index) {
+          // Validación por si el index quedó desfazado temporalmente en el cambio de pestaña
+          if (index >= items.length) return const SizedBox.shrink();
+
+          final item = items[index];
+          final isSelected = index == _selectedIndex;
+
+          // Casteo dinámico seguro para obtener el ID
+          final String? itemId = (item as dynamic).id;
+          final isFocused = itemId == widget.focusBillId;
+
+          Widget cardChild = _buildItemContent(item);
+
+          // Si es el enfocado, lo envolvemos en el Hero con protección de Material
+          if (isFocused && widget.heroTag != null) {
+            cardChild = Hero(
+              tag: widget.heroTag!,
+              flightShuttleBuilder:
+                  (
+                    flightContext,
+                    animation,
+                    flightDirection,
+                    fromHeroContext,
+                    toHeroContext,
+                  ) {
+                    // Evita saltos bruscos de tamaño causados por las deformaciones del ListWheel
+                    return Material(
+                      color: Colors.transparent,
+                      child: toHeroContext.widget,
+                    );
+                  },
+              child: Material(
+                color: Colors
+                    .transparent, // Mantiene intactos los textos en el Overlay
+                child: cardChild,
+              ),
+            );
+          }
+
+          // Aplicamos los efectos de escala y opacidad al resultado final
+          return AnimatedScale(
+            scale: isSelected ? 1.0 : 0.85,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: AnimatedOpacity(
+              opacity: isSelected ? 1.0 : 0.7,
+              duration: const Duration(milliseconds: 200),
+              child: cardChild,
+            ),
+          );
+        },
+        childCount: items.length,
+      ),
     );
+  }
+
+  // 3. Método auxiliar para construir el contenido de cada item
+  Widget _buildItemContent(dynamic item) {
+    if (item is Transaction) {
+      return SlidableItem(
+        onDelete: () async {
+          await Future.delayed(const Duration(milliseconds: 300));
+          _deleteTransaction(item.id);
+        },
+        child: TransactionCard(transaction: item),
+      );
+    } else if (item is Bill) {
+      return SlidableItem(
+        //
+        onDelete: () => _deleteBill(item.id),
+        onToggleStatus: () => _markBillAsPaid(item),
+        child: BillCard(bill: item, isPaid: false),
+      );
+    }
+    return const SizedBox.shrink();
   }
 }
 

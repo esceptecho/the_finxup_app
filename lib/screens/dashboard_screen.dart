@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/ds_life_style_profile.dart';
-import 'package:the_finxup_app/models/life_style_profile.dart';
 import 'package:the_finxup_app/providers/ds_final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
-import 'package:the_finxup_app/providers/old_finance_analytics_engine.dart';
+import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
+// import 'package:the_finxup_app/models/life_style_profile.dart';
+// import 'package:the_finxup_app/providers/final_finance_analytics_engine.dart';
+// import 'package:the_finxup_app/providers/old_finance_analytics_engine.dart';
+// import 'package:the_finxup_app/providers/notification_provider.dart';
 // import 'package:the_finxup_app/providers/finance_logic_provider.dart';
-import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/liquidity_chart.dart';
 import 'package:the_finxup_app/widgets/notification_tile.dart';

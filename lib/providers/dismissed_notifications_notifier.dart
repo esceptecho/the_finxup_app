@@ -9,12 +9,13 @@ import 'package:the_finxup_app/utils/notification_service.dart';
 // 1. PROVIDERS (Lógica de Estado Oculto)
 // ==========================================
 
+// 1. Guarda los IDs de las notificaciones que el usuario borró
 class DismissedNotificationsNotifier extends Notifier<Set<String>> {
   @override
   Set<String> build() => {};
 
   void dismiss(String id) {
-    state = {...state, id}; // Agrega el ID al Set de ocultos
+    state = {...state, id};
   }
 }
 
@@ -23,27 +24,23 @@ final dismissedNotificationsProvider =
       DismissedNotificationsNotifier.new,
     );
 
-// Tu provider original modificado con el filtro
+// 2. Combina los datos de la app, genera las alertas y filtra las eliminadas
 final notificationsProvider = Provider<List<AppNotification>>((ref) {
-  final billsAsync = ref.watch(billListNotifierProvider);
-  final transactionsAsync = ref.watch(transactionListNotifierProvider);
-  final goalsAsync = ref.watch(goalListNotifierProvider);
+  final bills = ref.watch(billListNotifierProvider).value ?? [];
+  final transactions = ref.watch(transactionListNotifierProvider).value ?? [];
+  final goals = ref.watch(goalListNotifierProvider).value ?? [];
 
-  final bills = billsAsync.value ?? [];
-  final transactions = transactionsAsync.value ?? [];
-  final goals = goalsAsync.value ?? [];
-
-  // Generamos todas las notificaciones desde tu servicio
+  // Generamos todas
   final allNotifications = NotificationService.generate(
     bills,
     transactions,
     goals,
   );
 
-  // Escuchamos cuáles ya vio/descartó el usuario
+  // Escuchamos las eliminadas
   final dismissedIds = ref.watch(dismissedNotificationsProvider);
 
-  // Filtramos: Solo se quedan las que NO estén en el Set de descartadas
+  // Devolvemos solo las activas
   return allNotifications
       .where((notif) => !dismissedIds.contains(notif.id))
       .toList();
