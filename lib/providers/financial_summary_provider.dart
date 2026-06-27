@@ -1,34 +1,43 @@
-// 1. Provider para calcular las finanzas eficientemente (Memoizado)
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
+import 'package:the_finxup_app/utils/transaction_utils.dart'; // <-- nuevo
 
-// 1. Provider para calcular las finanzas eficientemente (Memoizado)
 final financialSummaryProvider = Provider.autoDispose((ref) {
   final transactionsAsync = ref.watch(transactionListNotifierProvider);
 
   return transactionsAsync.maybeWhen(
     data: (transactions) {
-      final double income = transactions
-          .where((tx) => tx.type == TransactionType.income)
-          .fold(0.0, (sum, tx) => sum + tx.amount);
+      double income = 0.0;
+      double expense = 0.0;
 
-      final double expense = transactions
-          .where((tx) => tx.type == TransactionType.expense)
-          .fold(0.0, (sum, tx) => sum + tx.amount);
+      for (final tx in transactions) {
+        // Calcula el monto acumulado hasta hoy según la recurrencia
+        final accumulated = TransactionUtilsTM.calculateAccumulatedToNowTM(
+          amount: tx.amount,
+          startDate: tx.date,
+          recurrence: tx.recurrence,
+        );
+
+        // Suma al total correspondiente según el tipo
+        if (tx.type == TransactionType.income) {
+          income += accumulated;
+        } else if (tx.type == TransactionType.expense) {
+          expense += accumulated;
+        }
+      }
 
       final double balance = income - expense;
 
-      // Cálculo del porcentaje mejorado
+      // Cálculo del porcentaje (mantiene tu lógica actual)
       final double percentage;
       if (income == 0 && expense == 0) {
-        percentage = 0.0; // Sin transacciones
+        percentage = 0.0;
       } else if (income == 0) {
-        percentage = -100.0; // Solo gastos
+        percentage = -100.0;
       } else if (expense == 0) {
-        percentage = 100.0; // Solo ingresos
+        percentage = 100.0;
       } else {
-        // Porcentaje del balance respecto al mayor valor
         final double maxValue = income > expense ? income : expense;
         percentage = (balance / maxValue) * 100;
       }
@@ -42,6 +51,22 @@ final financialSummaryProvider = Provider.autoDispose((ref) {
     },
     orElse: () => (balance: 0.0, income: 0.0, expense: 0.0, percentage: 0.0),
   );
+});
+
+// Providers derivados (opcionales, para acceso rápido a partes específicas)
+// Solo el número de balance	BalanceCard
+final saldoTotalHistoricoProvider = Provider<double>((ref) {
+  return ref.watch(financialSummaryProvider).balance;
+});
+
+// Solo ingresos totales	IncomeWidget
+final totalIncomeProvider = Provider<double>((ref) {
+  return ref.watch(financialSummaryProvider).income;
+});
+
+// Solo gastos totales	ExpenseWidget
+final totalExpenseProvider = Provider<double>((ref) {
+  return ref.watch(financialSummaryProvider).expense;
 });
 
 // 2. Helper de formateo mejorado
@@ -67,7 +92,7 @@ class CurrencyFormatter {
   static String formatAmount(double amount) {
     if (amount == 0) return '0.00';
 
-    final String sign = amount > 0 ? '+' : '-';
+    final String sign = '\$';
     final String formattedNumber = amount
         .abs()
         .toStringAsFixed(2)

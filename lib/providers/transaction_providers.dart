@@ -28,7 +28,23 @@ final transactionRepositoryProvider = Provider<TransactionRepository>((ref) {
 final transactionsStreamProvider = StreamProvider<List<Transaction>>((ref) {
   final repo = ref.watch(transactionRepositoryProvider);
   return repo.watchTransactions();
+/*
+AsyncValue<List<Transaction>>: Stream de listas de transacciones
+
+Ejemplo de uso:
+final transactionsAsync = ref.watch(transactionsStreamProvider);
+transactionsAsync.when(
+  data: (transactions) => ListView(...),
+  loading: () => CircularProgressIndicator(),
+  error: (e, _) => Text('Error: $e'),
+);
+
+*/ 
+
+
 });
+
+
 
 /* Con estos providers, cualquier widget puede usar 'ref.watch(transactionsStreamProvider)' 
 para obtener la lista de transacciones y actualizarse automáticamente cuando cambien,

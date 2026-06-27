@@ -29,6 +29,15 @@ class GoalCard extends StatelessWidget {
               children: [
                 Text(goal.emoji, style: const TextStyle(fontSize: 28)),
                 Text(
+                  // Lógica de condición
+                  goal.currentAmount >= goal.targetAmount
+                      ? '🎉 ¡Meta alcanzada! 🎉'
+                      : goal.targetDate.isBefore(DateTime.now())
+                      ? 'Meta vencida ⏳'
+                      : 'En progreso', // O puedes dejar la fecha: goal.targetDate.toString().split(' ')[0]
+                  style: const TextStyle(fontSize: 14),
+                ),
+                Text(
                   goal.progressText,
                   style: TextStyle(
                     color: AppThemeHSL.accentGold,

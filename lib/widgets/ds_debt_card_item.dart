@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart'; // Asegúrate de tener la dependencia
 import 'package:intl/intl.dart';
+import 'package:the_finxup_app/models/currency_type_extensions.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
 import 'package:the_finxup_app/providers/debt_provider.dart';
-import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/financial_summary_provider.dart';
 import 'package:the_finxup_app/screens/debt_detail_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
@@ -22,10 +23,29 @@ class DsDebtCardItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Obtener la moneda seleccionada globalmente
+    final selectedCurrency = ref.watch(selectedCurrencyProvider);
+
+    // Obtener el monto convertido de esta deuda específica
+    final convertedAmount = ref.watch(debtConvertedAmountProvider(debt.id));
+
+    // Verificar si la moneda de la deuda es diferente a la seleccionada
+    final needsConversion = debt.currencyType != selectedCurrency;
+
+    // Formatear montos originales
     final cantidadFormateada = CurrencyFormatter.formatDebt(debt.cantidad);
     final pendienteFormateada = CurrencyFormatter.formatDebt(
       debt.montoRestante,
     );
+
+    // Formatear monto convertido (sin decimales para COP, ARS, CLP)
+    final convertedFormatted =
+        selectedCurrency == CurrencyType.cop ||
+            selectedCurrency == CurrencyType.ars ||
+            selectedCurrency == CurrencyType.clp
+        ? convertedAmount.toStringAsFixed(0)
+        : convertedAmount.toStringAsFixed(2);
+
     final porcentaje = debt.porcentajePagado;
     final estaVencido =
         debt.fechaVencimiento != null &&
@@ -124,7 +144,7 @@ class DsDebtCardItem extends ConsumerWidget {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w200,
                                     fontSize: 15,
                                     color: debt.pagado
                                         ? Colors.white38
@@ -151,16 +171,44 @@ class DsDebtCardItem extends ConsumerWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                '${debt.currencyType.symbol}$cantidadFormateada',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: debt.pagado
-                                      ? Colors.white30
-                                      : Colors.white,
-                                ),
+                              // MONTO ORIGINAL
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    debt
+                                        .currencyType
+                                        .flag, // ← Usando la extensión
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${debt.currencyType.symbol}$cantidadFormateada', // ← Usando la extensión
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w300,
+                                      fontSize: 16,
+                                      color: debt.pagado
+                                          ? Colors.white30
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
+
+                              // MONTO CONVERTIDO (solo si la moneda es diferente)
+                              if (needsConversion && convertedAmount > 0) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${selectedCurrency.symbol}$convertedFormatted ${selectedCurrency.code}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white54,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+
+                              // MONTO PENDIENTE (original)
                               if (debt.montoRestante != debt.cantidad &&
                                   !debt.pagado)
                                 Padding(
@@ -176,7 +224,6 @@ class DsDebtCardItem extends ConsumerWidget {
                                 ),
                             ],
                           ),
-                          // El Checkbox y su SizedBox intermedio han sido eliminados por completo
                         ],
                       ),
 

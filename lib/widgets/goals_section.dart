@@ -68,6 +68,7 @@ class GoalsSection extends StatelessWidget {
               ? SizedBox(
                   height: 160, // Altura del carrusel
                   child: ListView.builder(
+                    reverse: true,
                     controller:
                         scrollController, // <--- ASIGNAR EL CONTROLLER AQUÍ
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -116,7 +117,7 @@ class GoalsSection extends StatelessWidget {
                                   border: isFocused
                                       ? Border.all(
                                           color: Colors.purpleAccent,
-                                          width: 2,
+                                          width: 1,
                                         )
                                       : null,
                                 ),

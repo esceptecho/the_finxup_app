@@ -47,11 +47,12 @@ class _AddTransactionFormState extends ConsumerState<AddTransactionForm> {
 
   // Actualizado al nuevo enum del modelo
   TransactionType _selectedType = TransactionType.expense;
-  dynamic _selectedSubCategory = ExpenseSubCategory.food; // Valor inicial
+  late dynamic _selectedSubCategory;
+  late dynamic _selectedRecurrence;
   double _previewTotal = 0.0;
   bool _createCalendarReminder = true;
   DateTime _selectedDate = DateTime.now();
-  String _selectedRecurrence = 'Única vez';
+
   double __calculatedRecurrence = 0.0;
 
   final List<String> _recurrenceOptions = [
@@ -123,6 +124,10 @@ class _AddTransactionFormState extends ConsumerState<AddTransactionForm> {
         setState(() => _isEditingAmount = false);
       }
     });
+
+    _selectedSubCategory =
+        widget.initialTransaction?.subCategory ?? ExpenseSubCategory.food;
+    _selectedRecurrence = widget.initialTransaction?.recurrence ?? 'Única vez';
   }
 
   void _scrollToBottom() {
@@ -712,10 +717,6 @@ class _AddTransactionFormState extends ConsumerState<AddTransactionForm> {
             (categoryIcons[_selectedSubCategory] ?? Icons.help_outline)
                 .codePoint,
         recurrenceAmount: __calculatedRecurrence,
-        // Asignamos un icono por defecto según el tipo para cumplir con el modelo
-        // iconCodePoint: _selectedType == TransactionType.expense
-        //     ? Icons.shopping_bag_outlined.codePoint
-        //     : Icons.account_balance_wallet_outlined.codePoint,
       );
 
       await widget.onAdd(newTx);

@@ -14,15 +14,13 @@ class Goal extends HiveObject {
   final double targetAmount;
 
   @HiveField(3)
-  final double currentAmount; 
+  final double currentAmount;
 
-  @HiveField(4, defaultValue: '🎯') 
+  @HiveField(4, defaultValue: '🎯')
   final String emoji;
 
   @HiveField(5)
   final DateTime targetDate;
-
-  
 
   Goal({
     required this.id,
@@ -31,8 +29,6 @@ class Goal extends HiveObject {
     required this.currentAmount,
     this.emoji = "🎯",
     required this.targetDate, // O dale un valor por defecto aquí
-    
-    
   });
 
   Goal copyWith({
@@ -41,22 +37,18 @@ class Goal extends HiveObject {
     double? targetAmount,
     double? currentAmount,
     String? emoji,
-    
   }) {
     return Goal(
       id: id ?? this.id,
       title: title ?? this.title,
       targetAmount: targetAmount ?? this.targetAmount,
       currentAmount: currentAmount ?? this.currentAmount,
-      emoji: emoji ?? this.emoji, 
+      emoji: emoji ?? this.emoji,
       targetDate: targetDate,
-      
-      
     );
   }
 
-    // Calcula el porcentaje (0.0 a 1.0)
+  // Calcula el porcentaje (0.0 a 1.0)
   double get progress => (currentAmount / targetAmount).clamp(0.0, 1.0);
   String get progressText => "${(progress * 100).toInt()}%";
 }
-

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/providers/list_notifier.dart';
-import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/financial_summary_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
@@ -14,8 +14,8 @@ import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/transaction_card.dart';
 
 class ConsumerTransactionsScreen extends ConsumerStatefulWidget {
-  final bool openAddModal; // Parámetro para abrir el modal automáticamente
-  final String? focusBillId; // ¡Recibe el ID desde la navegación!
+  final bool openAddModal;
+  final String? focusBillId; // Puede ser ID de factura o transacción
   final String? heroTag;
   const ConsumerTransactionsScreen({
     super.key,
@@ -32,19 +32,21 @@ class ConsumerTransactionsScreen extends ConsumerStatefulWidget {
 class _ConsumerTransactionsScreenState
     extends ConsumerState<ConsumerTransactionsScreen>
     with SingleTickerProviderStateMixin {
-  String _selectedCategory = 'transactions'; // 'transactions' o 'invoices'
+  // CORREGIDO: No la inicializamos estática. Se determinará de forma dinámica en el initState.
+  late String _selectedCategory;
   bool get _isShowingTransactions => _selectedCategory == 'transactions';
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool showTAnimatedTextKit = true;
 
-  // 1. Primero, declara el controlador en tu State class
-  // 1. Usar FixedExtentScrollController en lugar del controller genérico
   late FixedExtentScrollController _wheelController;
   int _selectedIndex = 0;
 
-  // Paleta de colores
-  static const Color wineColor = Color(0xFF722F37); // Vino tinto
+  // Bandera de control para ejecutar el scroll automático una única vez al entrar
+  bool _hasScrolledToFocus = false;
+
+  static const Color wineColor = Color(0xFF722F37);
   static const Color darkWineColor = Color(0xFF4A1D24);
 
   @override
@@ -66,28 +68,43 @@ class _ConsumerTransactionsScreenState
       });
     }
 
-    final billsState = ref.read(billListNotifierProvider);
+    // 1. DETERMINAR PESTAÑA Y OFFSET INICIAL (SÍNCRONO DESDE EL CACHÉ)
+    _selectedCategory = 'transactions'; // Valor por defecto seguro
     int initialIndex = 0;
 
-    if (widget.focusBillId != null && billsState is AsyncData) {
-      final items = billsState.value;
-      final index =
-          items?.indexWhere((bill) => bill.id == widget.focusBillId) ?? -1;
+    if (widget.focusBillId != null) {
+      final bills = ref.read(billListNotifierProvider).value ?? [];
+      final txs = ref.read(transactionListNotifierProvider).value ?? [];
 
-      if (index != -1) {
-        initialIndex = index;
-        _selectedIndex = index;
+      // Buscar si el ID pertenece a una factura
+      final billIndex = bills.indexWhere((b) => b.id == widget.focusBillId);
+      // Buscar si el ID pertenece a una transacción
+      final txIndex = txs.indexWhere((t) => t.id == widget.focusBillId);
+
+      if (billIndex != -1) {
+        _selectedCategory = 'invoices';
+        initialIndex = billIndex;
+        _selectedIndex = billIndex;
+        _hasScrolledToFocus = true; // Ya lo posicionamos con éxito
+      } else if (txIndex != -1) {
+        _selectedCategory = 'transactions';
+        initialIndex = txIndex;
+        _selectedIndex = txIndex;
+        _hasScrolledToFocus = true; // Ya lo posicionamos con éxito
+      } else {
+        // Si no está en caché aún porque está cargando de forma asíncrona,
+        // por defecto asumimos que si viene de Bill Management va a invoices.
+        _selectedCategory = 'invoices';
       }
     }
 
-    // Tu rueda (ListWheelScrollView o similar) se posicionará perfectamente aquí
     _wheelController = FixedExtentScrollController(initialItem: initialIndex);
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    _wheelController.dispose(); // Limpieza correcta
+    _wheelController.dispose();
     super.dispose();
   }
 
@@ -95,15 +112,18 @@ class _ConsumerTransactionsScreenState
     if (_selectedCategory != category) {
       setState(() {
         _selectedCategory = category;
+        _selectedIndex = 0; // Resetear índice visual al cambiar de pestaña
         _animationController.reset();
         _animationController.forward();
       });
+      // Mover la rueda al primer elemento de la nueva pestaña de forma segura
+      if (_wheelController.hasClients) {
+        _wheelController.jumpToItem(0);
+      }
     }
   }
 
-  // --- MÉTODOS DE ACCIÓN ---
   void _markBillAsPaid(Bill bill) async {
-    // 1. Crear el objeto de transacción
     final tx = Transaction(
       description: "Pago: ${bill.title}",
       amount: bill.amount,
@@ -112,14 +132,8 @@ class _ConsumerTransactionsScreenState
       iconCodePoint: Icons.check_circle.codePoint,
     );
 
-    // 2. Llamar a los notifiers
-    // Primero agregamos la transacción
     await ref.read(transactionListNotifierProvider.notifier).addTransaction(tx);
-
-    // Luego borramos la factura
     await ref.read(billListNotifierProvider.notifier).delete(bill.id);
-
-    // Al usar Notifiers con invalidateSelf(), la UI se actualizará sola
   }
 
   void _deleteTransaction(String id) {
@@ -148,7 +162,6 @@ class _ConsumerTransactionsScreenState
 
   Widget _buildFAB(double percentage) {
     return FloatingActionButton(
-      // mini: true,
       onPressed: () => showAddCardModal(context),
       backgroundColor: wineColor,
       elevation: 4,
@@ -160,20 +173,59 @@ class _ConsumerTransactionsScreenState
 
   @override
   Widget build(BuildContext context) {
-    // final transactionList = ref.watch(filteredTransactionsProvider);
-    // final isExpanded = ref.watch(listProvider.select((s) => s.isExpanded));
     final billsList = ref.watch(billListNotifierProvider).value ?? [];
     final summary = ref.watch(financialSummaryProvider);
-
     final transactionListAsync = ref.watch(transactionListNotifierProvider);
     final transactions = transactionListAsync.value ?? [];
+
+    // 2. CONTROLADOR ASÍNCRONO POST-RENDER (Si los datos tardaron en cargar)
+    // 2. CONTROLADOR ASÍNCRONO POST-RENDER (Modificado para deslizamiento lento)
+    if (widget.focusBillId != null && !_hasScrolledToFocus) {
+      final bIndex = billsList.indexWhere((b) => b.id == widget.focusBillId);
+      final tIndex = transactions.indexWhere((t) => t.id == widget.focusBillId);
+
+      if (bIndex != -1) {
+        _hasScrolledToFocus = true;
+        _selectedCategory = 'invoices';
+        _selectedIndex = bIndex;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            // Espera a que termine la transición de pantallas
+            if (_wheelController.hasClients) {
+              _wheelController.animateToItem(
+                bIndex,
+                duration: const Duration(
+                  milliseconds: 1000,
+                ), // 1 segundo completo de giro sutil
+                curve: Curves.linearToEaseOut,
+              );
+            }
+          });
+        });
+      } else if (tIndex != -1) {
+        _hasScrolledToFocus = true;
+        _selectedCategory = 'transactions';
+        _selectedIndex = tIndex;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_wheelController.hasClients) {
+            // CAMBIADO: animateToItem en lugar de jumpToItem
+            _wheelController.animateToItem(
+              tIndex,
+              duration: const Duration(
+                seconds: 4,
+              ), // <-- Controla la velocidad aquí
+              curve: Curves.easeInOutCubic,
+            );
+          }
+        });
+      }
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
       body: Column(
         children: [
           const SizedBox(height: 8),
-          // Tarjeta de resumen
           _buildSummaryCard(
             balance: summary.balance,
             income: summary.income,
@@ -181,13 +233,11 @@ class _ConsumerTransactionsScreenState
             percentage: summary.percentage,
           ),
           const SizedBox(height: 24),
-          // Selector de categorías
           ConsumerCategoryFilterSelector(
             selectedCategory: _selectedCategory,
             onCategoryChanged: _onCategoryChanged,
           ),
           const SizedBox(height: 16),
-          // Lista de items
           Expanded(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -200,7 +250,6 @@ class _ConsumerTransactionsScreenState
           ),
         ],
       ),
-      // ),
       floatingActionButton: _buildFAB(summary.percentage),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
@@ -214,15 +263,14 @@ class _ConsumerTransactionsScreenState
   }) {
     final billsList = ref.watch(billListNotifierProvider).value ?? [];
     final transactionList = ref.watch(filteredTransactionsProvider);
-    // final summary = ref.watch(financialSummaryProvider);
-    // final percentage = summary.percentage;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [wineColor, darkWineColor],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -274,7 +322,7 @@ class _ConsumerTransactionsScreenState
                                 : AppThemeHSL.expenseLight,
                             size: 16,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             CurrencyFormatter.formatPercentage(percentage),
                             style: TextStyle(
@@ -299,7 +347,7 @@ class _ConsumerTransactionsScreenState
                           color: balance > 0
                               ? AppThemeHSL.incomeLight
                               : AppThemeHSL.expenseLight,
-                          fontSize: 36,
+                          fontSize: 32,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -309,8 +357,8 @@ class _ConsumerTransactionsScreenState
                             child: SizedBox(
                               height: 70,
                               child: Column(
-                                mainAxisAlignment: .center,
-                                crossAxisAlignment: .end,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   AnimatedTextKit(
                                     onTap: () {
@@ -349,7 +397,7 @@ class _ConsumerTransactionsScreenState
                                         ),
                                       ),
                                       TypewriterAnimatedText(
-                                        "${(percentage.toStringAsFixed(2))}% es  tu balance restante.",
+                                        "${(percentage.toStringAsFixed(2))}% es tu balance restante.",
                                         textStyle: TextStyle(
                                           color: AppThemeHSL.textSecondary
                                               .withValues(alpha: 0.9),
@@ -384,7 +432,6 @@ class _ConsumerTransactionsScreenState
                                           milliseconds: 100,
                                         ),
                                       ),
-
                                       TypewriterAnimatedText(
                                         "Esconder 👇",
                                         textStyle: TextStyle(
@@ -404,7 +451,7 @@ class _ConsumerTransactionsScreenState
                               ),
                             ),
                           )
-                        : SizedBox.shrink(),
+                        : const SizedBox.shrink(),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -470,7 +517,6 @@ class _ConsumerTransactionsScreenState
     );
   }
 
-  // 2. Método modificado para usar ListWheelScrollView
   Widget _buildItemsList({
     required bool isShowingTransactions,
     required List<Transaction> transactions,
@@ -504,12 +550,9 @@ class _ConsumerTransactionsScreenState
       );
     }
 
-    // 🗑️ SE ELIMINÓ EL BLOQUE DEL 'jumpToItem' DE AQUÍ
-    // (Recuerda mover esa lógica al botón que cambia la categoría)
-
     return ListWheelScrollView.useDelegate(
       controller: _wheelController,
-      itemExtent: 170, // Altura de cada item
+      itemExtent: 170,
       diameterRatio: 1.5,
       perspective: 0.003,
       squeeze: 1.0,
@@ -522,19 +565,16 @@ class _ConsumerTransactionsScreenState
       },
       childDelegate: ListWheelChildBuilderDelegate(
         builder: (context, index) {
-          // Validación por si el index quedó desfazado temporalmente en el cambio de pestaña
           if (index >= items.length) return const SizedBox.shrink();
 
           final item = items[index];
           final isSelected = index == _selectedIndex;
 
-          // Casteo dinámico seguro para obtener el ID
           final String? itemId = (item as dynamic).id;
           final isFocused = itemId == widget.focusBillId;
 
           Widget cardChild = _buildItemContent(item);
 
-          // Si es el enfocado, lo envolvemos en el Hero con protección de Material
           if (isFocused && widget.heroTag != null) {
             cardChild = Hero(
               tag: widget.heroTag!,
@@ -546,21 +586,15 @@ class _ConsumerTransactionsScreenState
                     fromHeroContext,
                     toHeroContext,
                   ) {
-                    // Evita saltos bruscos de tamaño causados por las deformaciones del ListWheel
                     return Material(
                       color: Colors.transparent,
                       child: toHeroContext.widget,
                     );
                   },
-              child: Material(
-                color: Colors
-                    .transparent, // Mantiene intactos los textos en el Overlay
-                child: cardChild,
-              ),
+              child: Material(color: Colors.transparent, child: cardChild),
             );
           }
 
-          // Aplicamos los efectos de escala y opacidad al resultado final
           return AnimatedScale(
             scale: isSelected ? 1.0 : 0.85,
             duration: const Duration(milliseconds: 200),
@@ -577,7 +611,7 @@ class _ConsumerTransactionsScreenState
     );
   }
 
-  // 3. Método auxiliar para construir el contenido de cada item
+  // Nota: Asegúrate de tener implementado tu método original para renderizar las tarjetas internas
   Widget _buildItemContent(dynamic item) {
     if (item is Transaction) {
       return SlidableItem(

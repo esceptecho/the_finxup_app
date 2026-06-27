@@ -181,16 +181,15 @@ class _ExpansionFinanceInsightPanelState
     if (insight.originalId == null) return;
 
     final String idReal = insight.originalId!;
-    final String tagAnimacion = 'hero_${insight.id}';
+    final String tagAnimacion = 'hero_${insight.id}'; // Ej: 'hero_goal_123'
 
     if (insight.id.startsWith('tx_')) {
-      // Si tu método de transacciones aún no usa el tag, pásalo o remuévelo de aquí
       _navigateToTransactionDetail(idReal);
     } else if (insight.id.startsWith('bill_')) {
-      // CORREGIDO: Pasamos ambos argumentos de forma posicional
       _navigateToBillManagement(idReal, tagAnimacion);
     } else if (insight.id.startsWith('goal_')) {
-      _navigateToGoalDetail(idReal);
+      // CORREGIDO: Ahora pasamos también el tagAnimacion
+      _navigateToGoalDetail(idReal, tagAnimacion);
     }
   }
 
@@ -226,11 +225,14 @@ class _ExpansionFinanceInsightPanelState
     );
   }
 
-  void _navigateToGoalDetail(String goalId) {
+  void _navigateToGoalDetail(String goalId, String heroTag) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => EnhancedHomeScreen(focusGoalId: goalId, heroTag: 'hero_$goalId',
+        builder: (context) => EnhancedHomeScreen(
+          focusGoalId: goalId,
+          heroTag:
+              heroTag, // CORREGIDO: Usamos el tag idéntico que viene del origen
         ),
       ),
     );

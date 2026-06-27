@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
+import 'package:the_finxup_app/providers/financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
 enum ChartPeriod { week, month, quarter, year }
 
-class DsStatisticsScreen extends StatefulWidget {
-  final List<Transaction> transactions;
-
-  const DsStatisticsScreen({super.key, required this.transactions});
+class DsStatisticsScreen extends ConsumerStatefulWidget {
+  const DsStatisticsScreen({super.key});
 
   @override
-  State<DsStatisticsScreen> createState() => _DsStatisticsScreenState();
+  ConsumerState<DsStatisticsScreen> createState() => _DsStatisticsScreenState();
 }
 
-class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
+class _DsStatisticsScreenState extends ConsumerState<DsStatisticsScreen> {
   ChartPeriod _selectedPeriod = ChartPeriod.month;
   bool _isLoading = false;
 
-  double _totalSpent = 0.0;
-  double _previousTotalSpent = 0.0; // para calcular tendencia
+  double _previousTotalSpent = 0.0;
   double _maxExpense = 0.0;
   List<FlSpot> _chartSpots = [];
   final Map<ChartPeriod, List<FlSpot>> _spotsCache = {};
@@ -28,15 +28,38 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
   @override
   void initState() {
     super.initState();
-    _processData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _processData();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    ref.listenManual(transactionListNotifierProvider, (prev, next) {
+      if (prev != next) {
+        _processData();
+      }
+    });
   }
 
   Future<void> _processData() async {
     if (_isLoading) return;
+
+    final transactionsAsync = ref.read(transactionListNotifierProvider);
+
+    if (transactionsAsync is! AsyncData) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final transactions = transactionsAsync.value;
+
     setState(() => _isLoading = true);
 
-    // Pequeño delay para que la animación se note (opcional)
     await Future.delayed(const Duration(milliseconds: 10));
+
+    if (!mounted) return;
 
     final now = DateTime.now();
     int pointsCount;
@@ -61,30 +84,27 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         break;
     }
 
-    // Fechas del período actual
     final startDate = _selectedPeriod == ChartPeriod.year
         ? DateTime(now.year, now.month - 11, 1)
         : now.subtract(Duration(days: pointsCount - 1));
 
-    // Fechas del período anterior (para la tendencia)
     final previousStartDate = _selectedPeriod == ChartPeriod.year
         ? DateTime(now.year - 1, now.month - 11, 1)
         : startDate.subtract(Duration(days: pointsCount));
     final previousEndDate = startDate.subtract(const Duration(days: 1));
 
-    double tempTotal = 0.0;
     double tempPrevTotal = 0.0;
     double tempMax = 0.0;
     final Map<String, double> dataMap = {};
     final Map<String, double> prevDataMap = {};
 
-    for (var tx in widget.transactions) {
+    for (var tx in transactions!) {
       if (tx.type != TransactionType.expense) continue;
 
       final key = DateFormat(dateFormat).format(tx.date);
+
       if (tx.date.isAfter(startDate) || tx.date.isAtSameMomentAs(startDate)) {
         dataMap.update(key, (v) => v + tx.amount, ifAbsent: () => tx.amount);
-        tempTotal += tx.amount;
         if (tx.amount > tempMax) tempMax = tx.amount;
       } else if (tx.date.isAfter(previousStartDate) &&
           tx.date.isBefore(previousEndDate)) {
@@ -97,7 +117,6 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
       }
     }
 
-    // Generar los spots para el gráfico
     List<FlSpot> spots = [];
     for (int i = 0; i < pointsCount; i++) {
       DateTime pointDate;
@@ -110,37 +129,43 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
       spots.add(FlSpot(i.toDouble(), dataMap[key] ?? 0.0));
     }
 
-    // Guardar en caché por período
     _spotsCache[_selectedPeriod] = spots;
+
+    if (!mounted) return;
 
     setState(() {
       _chartSpots = spots;
-      _totalSpent = tempTotal;
       _previousTotalSpent = tempPrevTotal;
       _maxExpense = tempMax;
       _isLoading = false;
     });
   }
 
-  /// Cambia el período con animación de fade en el gráfico
   void _changePeriod(ChartPeriod newPeriod) {
     if (_selectedPeriod == newPeriod) return;
     setState(() {
       _selectedPeriod = newPeriod;
-      _chartSpots = []; // limpia para mostrar el fade
+      _chartSpots = [];
     });
-    _processData(); // recalcula y llena _chartSpots de nuevo
+    _processData();
   }
 
-  double get _dailyAverage =>
-      _totalSpent /
-      (_selectedPeriod == ChartPeriod.week
-          ? 7
-          : _selectedPeriod == ChartPeriod.month
-          ? 30
-          : _selectedPeriod == ChartPeriod.quarter
-          ? 90
-          : 365);
+  double get _totalSpent {
+    final summary = ref.watch(financialSummaryProvider);
+    return summary.expense;
+  }
+
+  double get _dailyAverage {
+    final daysInPeriod = _selectedPeriod == ChartPeriod.week
+        ? 7
+        : _selectedPeriod == ChartPeriod.month
+        ? 30
+        : _selectedPeriod == ChartPeriod.quarter
+        ? 90
+        : 365;
+
+    return daysInPeriod > 0 ? _totalSpent / daysInPeriod : 0.0;
+  }
 
   String get _trendText {
     if (_previousTotalSpent == 0) return "vs período anterior";
@@ -151,8 +176,12 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
     return "$arrow ${percent.toStringAsFixed(1)}% vs período anterior";
   }
 
-  Color get _trendColor =>
-      _totalSpent > _previousTotalSpent ? Colors.redAccent : Colors.greenAccent;
+  Color get _trendColor {
+    if (_previousTotalSpent == 0) return Colors.grey;
+    return _totalSpent > _previousTotalSpent
+        ? Colors.redAccent
+        : Colors.greenAccent;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,145 +206,139 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 12),
+      body: RefreshIndicator(
+        color: AppThemeHSL.accentGold,
+        onRefresh: () async {
+          ref.invalidate(transactionListNotifierProvider);
+          _processData();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 12),
 
-            
+              // ---------- Cabecera con total y tendencia ----------
+              _buildHeader(currencyFormatter),
 
-            // ---------- Cabecera con total y tendencia ----------
-            Column(
-              children: [
-                Text(
-                  'Total Gastado',
-                  style: TextStyle(
-                    color: Colors.blueGrey.shade400,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  currencyFormatter.format(_totalSpent),
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 46,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Indicador de tendencia (aprovecha espacio)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _trendColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(7),
-                  ),
-                  child: Text(
-                    _trendText,
-                    style: TextStyle(
-                      color: _trendColor,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
+              // ---------- Gráfico ----------
+              _buildChartSection(compactFormatter, currencyFormatter),
 
-            // ---------- Gráfico rediseñado (más fino, con puntos y transición suave) ----------
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              height: 340,
-              decoration: BoxDecoration(
-                color: AppThemeHSL.backgroundDeep, // const Color(0xFF1A1A2E),
-                borderRadius: BorderRadius.circular(7),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+              const SizedBox(height: 8),
+
+              // ---------- Selector de período ----------
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildPeriodSelector(),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 36),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    transitionBuilder: (child, anim) =>
-                        FadeTransition(opacity: anim, child: child),
-                    child: _isLoading
-                        ? Center(
-                            child: CircularProgressIndicator(
-                              color: AppThemeHSL.accentGold,
-                            ),
-                          )
-                        : LineChart(
-                            key: ValueKey(
-                              _selectedPeriod,
-                            ), // fuerza rebuild al cambiar período
-                            _buildLineChartData(
-                              compactFormatter,
-                              currencyFormatter,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
 
-            // const SizedBox(height: 8),
-// ---------- Selector de período personalizado (más fino) ----------
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildPeriodSelector(),
-            ),
+              const SizedBox(height: 24),
 
-            const SizedBox(height: 24),
-            // ---------- Tarjetas resumen (más compactas pero informativas) ----------
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.trending_up_rounded,
-                      title: 'Gasto más alto',
-                      value: currencyFormatter.format(_maxExpense),
-                      color: const Color(0xFFFF1744),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSummaryCard(
-                      icon: Icons.calendar_today,
-                      title: 'Promedio diario',
-                      value: currencyFormatter.format(_dailyAverage),
-                      color: AppThemeHSL.accentGold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              // ---------- Tarjetas resumen ----------
+              _buildSummaryCards(currencyFormatter),
+
+              // ---------- Espacio adicional para scroll ----------
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ------------------------ UI COMPONENTES ------------------------
+  // ======================= WIDGETS DE UI =======================
+
+  Widget _buildHeader(NumberFormat currencyFormatter) {
+    return Column(
+      children: [
+        Text(
+          'Total Gastado',
+          style: TextStyle(
+            color: Colors.blueGrey.shade400,
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            currencyFormatter.format(_totalSpent),
+            key: ValueKey(_totalSpent),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 46,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -1,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: _trendColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            _trendText,
+            style: TextStyle(
+              color: _trendColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChartSection(
+    NumberFormat compactFormatter,
+    NumberFormat currencyFormatter,
+  ) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      height: 360, // ✅ Aumentado para mejor espaciado
+      decoration: BoxDecoration(
+        color: AppThemeHSL.backgroundDeep,
+        borderRadius: BorderRadius.circular(7),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 20, 16, 40),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: AppThemeHSL.accentGold,
+                    ),
+                  )
+                : LineChart(
+                    key: ValueKey(_selectedPeriod),
+                    _buildLineChartData(compactFormatter, currencyFormatter),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildPeriodSelector() {
     final periods = [
@@ -328,9 +351,7 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppThemeHSL.background.withValues(
-          alpha: 0.08,
-        ), // const Color(0xFF1A1A2E).withValues(alpha: 0.6),
+        color: AppThemeHSL.background.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(7),
         border: Border.all(color: Colors.transparent),
       ),
@@ -374,6 +395,33 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
     );
   }
 
+  Widget _buildSummaryCards(NumberFormat currencyFormatter) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSummaryCard(
+              icon: Icons.trending_up_rounded,
+              title: 'Gasto más alto',
+              value: currencyFormatter.format(_maxExpense),
+              color: const Color(0xFFFF1744),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryCard(
+              icon: Icons.calendar_today,
+              title: 'Promedio diario',
+              value: currencyFormatter.format(_dailyAverage),
+              color: AppThemeHSL.accentGold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummaryCard({
     required IconData icon,
     required String title,
@@ -383,7 +431,7 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: AppThemeHSL.background,// const Color(0xFF1A1A2E).withValues(alpha: 0.6),
+        color: AppThemeHSL.background,
         borderRadius: BorderRadius.circular(7),
         border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
@@ -435,27 +483,28 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
     );
   }
 
-  // ------------------------ GRÁFICO FINO ------------------------
+  // ======================= CONFIGURACIÓN DEL GRÁFICO =======================
+
   LineChartData _buildLineChartData(
     NumberFormat compactFormatter,
     NumberFormat currencyFormatter,
   ) {
+    final maxY = _chartSpots.isEmpty
+        ? 100.0
+        : _chartSpots
+                  .map((e) => e.y)
+                  .reduce((a, b) => a > b ? a : b)
+                  .toDouble() *
+              1.1; // ← Convertir antes de multiplicar
+
     return LineChartData(
       gridData: FlGridData(
-        getDrawingVerticalLine: (value) => FlLine(
-          color: Colors.white.withValues(alpha: 0.2),
-          strokeWidth: 0.1,
-
-        ),
-        verticalInterval: 2.0,
         show: true,
-        drawVerticalLine: true,
-        horizontalInterval: _getYInterval(),
+        drawVerticalLine: false,
+        horizontalInterval: _calculateNiceInterval(maxY),
         getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.white.withValues(alpha: 0.2),
-          strokeWidth: 0.2,
-          // dashArray: [5, 5,],
-
+          color: Colors.white.withValues(alpha: 0.08),
+          strokeWidth: 0.5,
         ),
       ),
       titlesData: FlTitlesData(
@@ -467,17 +516,18 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 42,
-            interval: _getYInterval(),
+            reservedSize: 56, // ✅ Más espacio para labels
+            interval: _calculateNiceInterval(maxY),
             getTitlesWidget: (value, meta) {
               if (value == 0) return const SizedBox.shrink();
               return Padding(
-                padding: const EdgeInsets.only(right: 8,),
+                padding: const EdgeInsets.only(right: 8, top: 4),
                 child: Text(
                   compactFormatter.format(value),
                   style: TextStyle(
                     color: Colors.blueGrey.shade400,
-                    fontSize: 11,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               );
@@ -487,7 +537,7 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
-            reservedSize: 45,
+            reservedSize: 42,
             interval: _getXInterval(),
             getTitlesWidget: (value, meta) => _buildBottomLabels(value),
           ),
@@ -496,40 +546,18 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
       borderData: FlBorderData(show: false),
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (touchedSpot) => const Color(0xFF252545),
+          getTooltipColor: (touchedSpot) =>
+              const Color(0xFF252545).withValues(alpha: 0.95),
+          tooltipPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
+          ),
+          tooltipBorderRadius: BorderRadius.circular(8),
           getTooltipItems: (List<LineBarSpot> touchedSpots) {
             return touchedSpots.map((spot) {
-              // Obtener la fecha correspondiente para mostrarla en el tooltip
-              String dateLabel = "";
-              try {
-                final int idx = spot.spotIndex.toInt();
-                final now = DateTime.now();
-                if (_selectedPeriod == ChartPeriod.year) {
-                  final date = DateTime(now.year, now.month - (11 - idx), 1);
-                  dateLabel = DateFormat('MMM yyyy', 'es_ES').format(date);
-                } else {
-                  int daysToSubtract;
-                  switch (_selectedPeriod) {
-                    case ChartPeriod.week:
-                      daysToSubtract = 6;
-                      break;
-                    case ChartPeriod.month:
-                      daysToSubtract = 29;
-                      break;
-                    case ChartPeriod.quarter:
-                      daysToSubtract = 89;
-                      break;
-                    default:
-                      daysToSubtract = 6;
-                  }
-                  final date = now.subtract(
-                    Duration(days: daysToSubtract - idx),
-                  );
-                  dateLabel = DateFormat('dd MMM', 'es_ES').format(date);
-                }
-              } catch (_) {}
+              String dateLabel = _getTooltipDateLabel(spot.spotIndex);
               return LineTooltipItem(
-                "${currencyFormatter.format(spot.y)}\n$dateLabel",
+                '${currencyFormatter.format(spot.y)}\n$dateLabel',
                 const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -540,7 +568,7 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
             }).toList();
           },
         ),
-        touchSpotThreshold: 8,
+        touchSpotThreshold: 12,
         getTouchLineStart: (data, index) => 0,
         getTouchLineEnd: (data, index) => double.infinity,
       ),
@@ -548,28 +576,19 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         LineChartBarData(
           spots: _chartSpots.isEmpty ? [const FlSpot(0, 0)] : _chartSpots,
           isCurved: true,
-          curveSmoothness: 0.9,
+          curveSmoothness: 0.35,
           gradient: LinearGradient(
             colors: [AppThemeHSL.accentGoldSoft, AppThemeHSL.surfaceLighter],
           ),
-          barWidth: 1.0,
+          barWidth: 2.0,
           isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: false,
-            getDotPainter: (spot, percent, barData, index) =>
-                FlDotCirclePainter(
-                  radius: 0.2,
-                  color: Colors.white38,
-                  strokeWidth: 0.5,
-                  strokeColor: AppThemeHSL.accentGold,
-                ),
-          ),
+          dotData: FlDotData(show: false),
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
               colors: [
-                AppThemeHSL.accentGold.withValues(alpha: 0.2),
-                const Color(0xFFFF512F).withValues(alpha: 0.0),
+                AppThemeHSL.accentGold.withValues(alpha: 0.25),
+                AppThemeHSL.accentGold.withValues(alpha: 0.0),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
@@ -578,18 +597,39 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         ),
       ],
       minY: 0,
-      maxY: _chartSpots.isEmpty
-          ? 1
-          : _chartSpots.map((e) => e.y).reduce((a, b) => a > b ? a : b) * 1.05,
+      maxY: maxY,
     );
   }
 
-  double _getYInterval() {
-    if (_chartSpots.isEmpty) return 100;
-    final maxVal = _chartSpots.map((e) => e.y).reduce((a, b) => a > b ? a : b);
-    if (maxVal < 100) return 20;
-    if (maxVal < 500) return 100;
-    return 200;
+  /// Calcula un intervalo "bonito" para el eje Y
+  double _calculateNiceInterval(double maxValue) {
+    if (maxValue <= 0) return 50;
+
+    // Encontrar la magnitud
+    final magnitude = _pow10((maxValue).toStringAsFixed(0).length - 1);
+    final residual = maxValue / magnitude;
+
+    final niceTick;
+    if (residual <= 1.5) {
+      niceTick = magnitude / 5;
+    } else if (residual <= 3) {
+      niceTick = magnitude / 2;
+    } else if (residual <= 7) {
+      niceTick = magnitude;
+    } else {
+      niceTick = magnitude * 2;
+    }
+
+    // Asegurar al menos 3 líneas y máximo 6
+    return niceTick.clamp(maxValue / 6, maxValue / 2);
+  }
+
+  double _pow10(int exponent) {
+    double result = 1;
+    for (int i = 0; i < exponent; i++) {
+      result *= 10;
+    }
+    return result;
   }
 
   double _getXInterval() {
@@ -609,62 +649,90 @@ class _DsStatisticsScreenState extends State<DsStatisticsScreen> {
         break;
     }
 
-    // ✅ Mostrar máximo 6-7 etiquetas para evitar sobreposición
+    // Máximo 6 etiquetas para evitar sobreposición
     final maxLabels = 6.0;
-    return (totalPoints / maxLabels).ceil().toDouble();
+    return (totalPoints / maxLabels).ceilToDouble();
+  }
+
+  String _getTooltipDateLabel(int idx) {
+    try {
+      final now = DateTime.now();
+      if (_selectedPeriod == ChartPeriod.year) {
+        final date = DateTime(now.year, now.month - (11 - idx), 1);
+        return DateFormat('MMM yyyy', 'es_ES').format(date);
+      } else {
+        int daysToSubtract = _getDaysToSubtract();
+        final date = now.subtract(Duration(days: daysToSubtract - idx));
+        return DateFormat('dd MMM', 'es_ES').format(date);
+      }
+    } catch (_) {
+      return '';
+    }
+  }
+
+  int _getDaysToSubtract() {
+    switch (_selectedPeriod) {
+      case ChartPeriod.week:
+        return 6;
+      case ChartPeriod.month:
+        return 29;
+      case ChartPeriod.quarter:
+        return 89;
+      default:
+        return 6;
+    }
   }
 
   Widget _buildBottomLabels(double value) {
     if (_chartSpots.isEmpty) return const SizedBox.shrink();
+
     final int idx = value.toInt();
-    if (idx < 0 ||
-        idx >=
-            (_selectedPeriod == ChartPeriod.year
-                ? 12
-                : (_selectedPeriod == ChartPeriod.week
-                      ? 7
-                      : (_selectedPeriod == ChartPeriod.month ? 30 : 90)))) {
-      return const SizedBox.shrink();
-    }
+    final int maxIndex = _selectedPeriod == ChartPeriod.year
+        ? 12
+        : _selectedPeriod == ChartPeriod.week
+        ? 7
+        : _selectedPeriod == ChartPeriod.month
+        ? 30
+        : 90;
+
+    if (idx < 0 || idx >= maxIndex) return const SizedBox.shrink();
 
     final now = DateTime.now();
-    String text = "";
+    String text = '';
+    bool isMainLabel = false;
+
     try {
       if (_selectedPeriod == ChartPeriod.year) {
         final date = DateTime(now.year, now.month - (11 - idx), 1);
         text = DateFormat.MMM('es_ES').format(date).toUpperCase();
+        isMainLabel = true;
       } else {
-        int daysToSubtract;
-        switch (_selectedPeriod) {
-          case ChartPeriod.week:
-            daysToSubtract = 6;
-            break;
-          case ChartPeriod.month:
-            daysToSubtract = 29;
-            break;
-          case ChartPeriod.quarter:
-            daysToSubtract = 89;
-            break;
-          default:
-            daysToSubtract = 6;
-        }
+        int daysToSubtract = _getDaysToSubtract();
         final date = now.subtract(Duration(days: daysToSubtract - idx));
-        text = _selectedPeriod == ChartPeriod.week
-            ? DateFormat('E', 'es_ES').format(date)
-            : DateFormat('dd MMM', 'es_ES').format(date);
+
+        if (_selectedPeriod == ChartPeriod.week) {
+          text = DateFormat('E', 'es_ES').format(date).substring(0, 2);
+          isMainLabel = true;
+        } else {
+          // Para mes y trimestre, mostrar solo algunos labels
+          if (idx % _getXInterval().toInt() == 0) {
+            text = DateFormat('dd MMM', 'es_ES').format(date);
+            isMainLabel = true;
+          }
+        }
       }
     } catch (_) {}
+
+    if (!isMainLabel) return const SizedBox.shrink();
+
     return Padding(
-      padding: const EdgeInsets.only(top: 32.0),
-      child: Transform.translate(
-        offset: const Offset(0, 8),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: Colors.blueGrey.shade400,
-            fontSize: 9,
-            fontWeight: FontWeight.w500,
-          ),
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.blueGrey.shade400,
+          fontSize: 9,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

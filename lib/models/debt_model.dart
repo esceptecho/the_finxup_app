@@ -198,23 +198,3 @@ enum CurrencyType {
   clp,
 }
 
-extension CurrencyTypeExtension on CurrencyType {
-  String get code => name.toUpperCase();
-
-  String get symbol {
-    switch (this) {
-      case CurrencyType.usd:
-      case CurrencyType.mxn:
-      case CurrencyType.cop:
-      case CurrencyType.ars:
-      case CurrencyType.clp:
-        return '\$';
-      case CurrencyType.eur:
-        return '€';
-      case CurrencyType.gbp:
-        return '£';
-      case CurrencyType.jpy:
-        return '¥';
-    }
-  }
-}

@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/screens/dashboard_screen.dart';
 import 'package:the_finxup_app/screens/ds_statistics_screen.dart';
 import 'package:the_finxup_app/screens/enhanced_home_screen.dart';
@@ -35,36 +34,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Escuchamos el provider de transacciones
-    final txsAsync = ref.watch(transactionListNotifierProvider);
-
     return Scaffold(
-      // 2. Usamos el estado asíncrono para manejar la carga
-      body: txsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (transactions) {
-          // 3. Definimos las pantallas aquí dentro, pasando la lista real
-          final screens = [
-            const EnhancedHomeScreen(),
-            const TransactionCalendarScreen(),
-            
-            // const HomeMainScreen(),
-            DsStatisticsScreen(
-              transactions: transactions,
-            ), // <--- Lista validada
-            const DashboardScreen(),
-            const MainTransactionsScreenV3(),
-          ];
-
-          return PageView(
-            controller: _pageController,
-            onPageChanged: (index) {
-              setState(() => _currentIndex = index);
-            },
-            children: screens,
-          );
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() => _currentIndex = index);
         },
+        children: const [
+          EnhancedHomeScreen(),
+          TransactionCalendarScreen(),
+          DsStatisticsScreen(), // ✅ Sin parámetros
+          DashboardScreen(),
+          MainTransactionsScreenV3(),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: AppThemeHSL.background,
@@ -88,7 +70,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             icon: Icon(Icons.calendar_month_rounded),
             label: 'Calendario',
           ),
-
           BottomNavigationBarItem(
             icon: Icon(Icons.bar_chart),
             label: 'Análisis',

@@ -34,7 +34,7 @@ class TransactionCard extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) =>
-                    TransactionDetailScreen(transaction: transaction),
+                    TransactionDetailScreen(transaction: transaction), 
               ),
             );
           },
@@ -68,6 +68,7 @@ class TransactionCard extends StatelessWidget {
                         child: Icon(
                           // Convertimos el codePoint de nuevo a IconData
                           IconData(
+                            // ignore: non_const_argument_for_const_parameter
                             transaction.iconCodePoint,
                             fontFamily: 'MaterialIcons',
                           ),
@@ -106,11 +107,12 @@ class TransactionCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
                               transaction.description,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: .ellipsis,
                               style: TextStyle(
+                                overflow: .fade,
                                 color: AppThemeHSL.textSecondary,
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w200,
                               ),
                               // Quitamos el maxLines: 1 para que pueda bajar
                               softWrap: true,

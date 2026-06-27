@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:the_finxup_app/models/currency_type_extensions.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
-import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/financial_summary_provider.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 
 class OldDebtCardItem extends StatelessWidget {

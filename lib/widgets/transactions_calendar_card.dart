@@ -22,7 +22,7 @@ class TransactionsCard extends StatelessWidget {
     final bool isIncome = transaction.type.toString().contains('income');
 
     return Hero(
-      // El ID único asegura que Flutter sepa exactamente qué tarjeta animar
+      // El ID único asegura que Flutter sepa exactamente qué tarjeta animar 
       tag: 'tx_hero_${transaction.id}',
       child: Material(
         type: MaterialType

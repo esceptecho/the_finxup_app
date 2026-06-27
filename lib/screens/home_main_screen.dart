@@ -215,7 +215,7 @@ class _HomeMainScreenState extends ConsumerState<HomeMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appNotifications = ref.watch(notificationsProvider);
+    final appNotifications = ref.watch(notificationsProvider); 
     int notifCount = appNotifications.length - 1;
     // Obtenemos solo la lista ya procesada (ordenada y limitada)
     final transactionList = ref.watch(filteredTransactionsProvider);

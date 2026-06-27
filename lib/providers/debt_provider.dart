@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:the_finxup_app/models/debt_model.dart';
+import 'package:the_finxup_app/providers/debt_currency_converter_provider.dart';
 import 'package:the_finxup_app/repositories/debt_repository.dart';
 import 'package:hive_ce/hive_ce.dart';
 
@@ -97,5 +98,54 @@ final balanceProvider = Provider<double>((ref) {
   final totalDeudas = ref.watch(totalDeudasProvider);
 
   return totalPrestamos - totalDeudas;
+});
+
+// Provider para el resumen completo de deudas en la moneda seleccionada
+final debtCurrencySummaryProvider = Provider<DebtCurrencySummary>((ref) {
+  final debts = ref.watch(debtListProvider);
+  final selectedCurrency = ref.watch(selectedCurrencyProvider);
+  final converter = ref.watch(currencyConverterProvider);
+
+  return converter.getDebtSummary(
+    debts: debts,
+    targetCurrency: selectedCurrency,
+  );
+});
+
+// Provider para total de deudas (convertido a la moneda seleccionada)
+final totalDeudasConvertedProvider = Provider<double>((ref) {
+  final summary = ref.watch(debtCurrencySummaryProvider);
+  return summary.totalDeudas;
+});
+
+// Provider para total de préstamos (convertido a la moneda seleccionada)
+final totalPrestamosConvertedProvider = Provider<double>((ref) {
+  final summary = ref.watch(debtCurrencySummaryProvider);
+  return summary.totalPrestamos;
+});
+
+// Provider para balance convertido
+final balanceConvertedProvider = Provider<double>((ref) {
+  final summary = ref.watch(debtCurrencySummaryProvider);
+  return summary.balance;
+});
+
+// Provider para obtener el monto de una deuda específica convertido
+final debtConvertedAmountProvider = Provider.family<double, String>((
+  ref,
+  debtId,
+) {
+  final debts = ref.watch(debtListProvider);
+  final selectedCurrency = ref.watch(selectedCurrencyProvider);
+  final converter = ref.watch(currencyConverterProvider);
+
+  final debt = debts.where((d) => d.id == debtId).firstOrNull;
+  if (debt == null) return 0;
+
+  return converter.convert(
+    amount: debt.montoRestante,
+    from: debt.currencyType,
+    to: selectedCurrency,
+  );
 });
 

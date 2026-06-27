@@ -14,8 +14,10 @@ import 'package:the_finxup_app/widgets/bill_card.dart';
 import 'package:the_finxup_app/widgets/calendar_goal_card.dart';
 import 'package:the_finxup_app/widgets/debt_card_item.dart';
 import 'package:the_finxup_app/widgets/slidable_item.dart';
-import 'package:the_finxup_app/widgets/transactions_card.dart';
+import 'package:the_finxup_app/widgets/transactions_calendar_card.dart';
 import 'package:table_calendar/table_calendar.dart';
+// import 'package:flutter/widget_previews.dart';
+
 
 class TransactionCalendarScreen extends ConsumerStatefulWidget {
   const TransactionCalendarScreen({super.key});
@@ -444,7 +446,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
           ),
         ),
         data: (eventMap) {
-          List<dynamic> _getEventsForDay(DateTime day) {
+          List<dynamic> getEventsForDay(DateTime day) {
             return eventMap[DateUtils.dateOnly(day)] ?? [];
           }
 
@@ -474,7 +476,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
                   firstDay: DateTime.utc(2020),
                   lastDay: DateTime.utc(2030),
                   selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  eventLoader: _getEventsForDay,
+                  eventLoader: getEventsForDay,
                   onDaySelected: (selectedDay, focusedDay) {
                     setState(() {
                       _selectedDay = selectedDay;
@@ -483,7 +485,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
                     
                     // Siempre mostrar overlay del día seleccionado
                     if (!_isPreviewMode) {
-                      final events = _getEventsForDay(selectedDay);
+                      final events = getEventsForDay(selectedDay);
                       _showOverlayForSelectedDay(selectedDay, events);
                     }
                   },
@@ -561,7 +563,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
                       return GestureDetector(
                         onTap: () {
                           // Al hacer tap en modo exploración, mostrar overlay
-                          final events = _getEventsForDay(date);
+                          final events = getEventsForDay(date);
                           _showOverlayForSelectedDay(date, events);
                         },
                         child: Container(
@@ -600,7 +602,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
                   ),
                 ),
                 Expanded(
-                  child: _buildEventList(_getEventsForDay(_selectedDay)),
+                  child: _buildEventList(getEventsForDay(_selectedDay)),
                 ),
               ],
             ),
@@ -692,7 +694,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
       ),
     );
   }
-
+  
   Widget _buildEventList(List<dynamic> events) {
     if (events.isEmpty) {
       return Center(
@@ -717,7 +719,7 @@ class _CalendarState extends ConsumerState<TransactionCalendarScreen> {
         ),
       );
     }
-
+    
     return ListView.builder(
       itemCount: events.length,
       itemBuilder: (context, index) {

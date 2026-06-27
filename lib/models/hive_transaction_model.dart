@@ -171,6 +171,8 @@ class Transaction extends HiveObject {
   final String recurrence;
   @HiveField(9)
   final double? recurrenceAmount;
+  @HiveField(10)
+  final double? recurrenceUntilNow;
 
   Transaction({
     String? id,
@@ -183,6 +185,7 @@ class Transaction extends HiveObject {
     required this.date,
     this.recurrence = 'Única vez',
     this.recurrenceAmount = 0.0,
+    this.recurrenceUntilNow = 0.0, // Valor por defecto
   }) : id = id ?? uuid.v4();
 
   // Conservamos copyWith porque sigue siendo útil para la UI
@@ -196,6 +199,7 @@ class Transaction extends HiveObject {
     List<String>? attachmentPaths,
     DateTime? date,
     String? recurrence,
+    double? recurrenceUntilNow,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -207,6 +211,7 @@ class Transaction extends HiveObject {
       attachmentPaths: attachmentPaths ?? this.attachmentPaths,
       date: date ?? this.date,
       recurrence: recurrence ?? this.recurrence,
+      recurrenceUntilNow: recurrenceUntilNow ?? this.recurrenceUntilNow,
     );
   }
 
@@ -255,7 +260,7 @@ extension TransactionExtension on Transaction {
     int count = 0;
     while (current.isBefore(target) || current.isAtSameMomentAs(target)) {
       count++;
-      if (recurrence == 'Diario') {
+      if (recurrence == 'Diaria') {
         current = current.add(const Duration(days: 1));
       } else if (recurrence == 'Semanal') {
         current = current.add(const Duration(days: 7));

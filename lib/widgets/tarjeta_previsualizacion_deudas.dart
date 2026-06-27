@@ -35,6 +35,7 @@ class TarjetaPrevisualizacionDeudas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final debts = ref.watch(debtListProvider);
 
     final deudasPendientes = debts.where((d) => !d.pagado).toList();
@@ -49,8 +50,11 @@ class TarjetaPrevisualizacionDeudas extends ConsumerWidget {
       elevation: 0,
       color: AppThemeHSL.surfaceLight,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         borderRadius: BorderRadius.circular(7),
+
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       child: InkWell(
         onTap: () => _abrirBottomSheetDeudas(context),
@@ -147,7 +151,7 @@ class TarjetaPrevisualizacionDeudas extends ConsumerWidget {
               ),
               const Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: Colors.white24,
+                color: Colors.white54,
                 size: 16,
               ),
             ],

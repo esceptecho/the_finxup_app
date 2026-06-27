@@ -9,10 +9,12 @@ import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/models/welcome_update_videos.dart';
 import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
-import 'package:the_finxup_app/providers/new_financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/financial_summary_provider.dart';
+import 'package:the_finxup_app/providers/goal_prediction_provider.dart';
 import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
+import 'package:the_finxup_app/screens/currency_converter_screen.dart';
 import 'package:the_finxup_app/screens/dashboard_finantial_health.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
 import 'package:the_finxup_app/screens/new_tolerance_calculator_screen.dart';
@@ -20,6 +22,7 @@ import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
 import 'package:the_finxup_app/screens/statistics_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
+import 'package:the_finxup_app/widgets/animated_rate_ticker.dart';
 import 'package:the_finxup_app/widgets/balance_legend.dart';
 import 'package:the_finxup_app/widgets/bill_card.dart';
 import 'package:the_finxup_app/widgets/colorize_names_widget.dart';
@@ -48,13 +51,16 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   bool isVisible = true;
   bool isSumaryVisible = true;
   bool _isGoalsVisible = true;
-  bool _welcomeSummaryCardShown = false;
   bool _welcomeVdeoCardShown = false;
   bool _showNotificationBanner = false;
+  bool _welcomeSummaryCardShown = false;
   static const int _hoursThreshold = 6; //Ajustar horas a voluntad
   static const int _hoursVideoThreshold = 3; //Ajustar horas a voluntad
 
-  late final ScrollController _goalsScrollController;
+  // CONTROLADORES DE SCROLL
+  late final ScrollController
+  _mainVerticalScrollController; // Para bajar la pantalla
+  late final ScrollController _goalsScrollController; // Para mover el carrusel
 
   @override
   void initState() {
@@ -62,31 +68,57 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     _checkWelcomeStatus();
     _checkWelcomeVideoStatus();
 
-    // Calcular el offset inicial de forma síncrona
-    double initialOffset = 0.0;
+    // 1. Calcular offset horizontal del carrusel de metas
+    double initialHorizontalOffset = 0.0;
     if (widget.focusGoalId != null) {
-      // Asegúrate de que el provider tenga los datos disponibles aquí.
-      // Si los datos se cargan asíncronamente, el Hero no funcionará hasta que se dibujen.
       final goals = ref.read(goalListNotifierProvider).value ?? [];
       final index = goals.indexWhere((g) => g.id == widget.focusGoalId);
 
       if (index != -1) {
-        final double cardWidth = 200.0; // Tu ancho real
-        initialOffset = index * cardWidth;
+        final double cardWidth = 200.0; // Tu ancho real de tarjeta
+        initialHorizontalOffset = index * cardWidth;
       }
     }
 
-    // Inicializar el controlador directamente con el offset correcto
+    // Inicializar controlador horizontal
     _goalsScrollController = ScrollController(
-      initialScrollOffset: initialOffset,
+      initialScrollOffset: initialHorizontalOffset,
     );
-  }
 
+    // Inicializar controlador vertical principal
+    _mainVerticalScrollController = ScrollController();
+
+    // 2. Hacer scroll vertical de la pantalla principal tras el primer renderizado
+    if (widget.focusGoalId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToGoalsSection();
+      });
+    }
+  }
 
   @override
   void dispose() {
+    _mainVerticalScrollController.dispose();
     _goalsScrollController.dispose();
     super.dispose();
+  }
+
+  /// Método para calcular dinámicamente y deslizar la pantalla principal hacia abajo
+  void _scrollToGoalsSection() {
+    if (!_mainVerticalScrollController.hasClients) return;
+
+    // Buscamos la posición máxima o un estimado alto para forzar a la pantalla a bajar
+    // hasta donde se encuentre la sección de metas.
+    final double maxScroll =
+        _mainVerticalScrollController.position.maxScrollExtent;
+
+    // Deslizamos suavemente toda la pantalla verticalmente
+    _mainVerticalScrollController.animateTo(
+      maxScroll *
+          1.00, // Ajusta este multiplicador según la altura de tu salud financiera/resumen
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _checkWelcomeStatus() async {
@@ -304,116 +336,196 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Escuchas atómicas (Performance óptimo)
+    final theme = Theme.of(context);
+    // 1. Escuchas atómicas del estado
     final transactionsAsync = ref.watch(transactionListNotifierProvider);
     final summary = ref.watch(financialSummaryProvider);
+
+    // Obtenemos los valores directos (si ya existen en caché, se usarán de inmediato)
     final goalsList = ref.watch(goalListNotifierProvider).value ?? [];
-    // final billsList = ref.watch(billListNotifierProvider).value ?? [];
-    // final transactionList = ref.watch(filteredTransactionsProvider);
-    // final isExpanded = ref.watch(listProvider.select((s) => s.isExpanded));
+    final transactions = transactionsAsync.value ?? [];
 
-    return transactionsAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, _) =>
-          Scaffold(body: Center(child: Text("Error al cargar datos: $err"))),
-      data: (transactions) {
-        return Scaffold(
-          // appBar: _buildAppBar(context),
-          body: CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(
-                context,
-                balance: summary.balance,
-                income: summary.income,
-                expense: summary.expense,
-                spentPercentage: summary.percentage,
-                transactions: transactions,
-              ),
-              // 2. Bloques Condicionales de Bienvenida
-              if (_welcomeVdeoCardShown)
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
+    // 2. EVITAR LOADER GENERAL SI HAY CACHÉ:
+    // Solo bloqueamos la pantalla completa si está cargando Y no hay absolutamente nada de datos previos.
+    if (transactionsAsync.isLoading &&
+        transactions.isEmpty &&
+        goalsList.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF121212), // Ajusta al color de tu app
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Colors
+                .amber, // Evita saltos visuales usando tu color de énfasis
+          ),
+        ),
+      );
+    }
 
-              // const SliverToBoxAdapter(child: FinancialHealthCard()),
-              // const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: TarjetaPrevisualizacionDeudas(),
+    // Solo mostramos pantalla de error limpia si no hay datos previos que rescatar
+    if (transactionsAsync.hasError && transactions.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "Error al cargar datos: ${transactionsAsync.error}",
+              style: const TextStyle(color: Colors.redAccent, fontSize: 16),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // 3. Renderizado síncrono e inmediato de la interfaz
+    return Scaffold(
+      body: CustomScrollView(
+        controller:
+            _mainVerticalScrollController, // <--- CORREGIDO: Asignamos el controlador vertical principal
+        slivers: [
+          _buildSliverAppBar(
+            context,
+            balance: summary.balance,
+            income: summary.income,
+            expense: summary.expense,
+            spentPercentage: summary.percentage,
+            transactions: transactions, // Se pasa la lista (vacía o con caché)
+          ),
+
+          // Bloques Condicionales de Bienvenida
+          if (_welcomeVdeoCardShown)
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (_welcomeVdeoCardShown) _buildVideoWelcomeCard(),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+          // En tu navegación principal
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Material(
+                color: AppThemeHSL.surfaceLighter,
+                clipBehavior:
+                    Clip.antiAlias, // Mantenlo para que el InkWell no se salga
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(7),
                 ),
-              ),
-              if (_welcomeSummaryCardShown) ...[
-                // mover aqui para condicionar
-              ],
-              // if (isSumaryVisible)
-              // if (_welcomeSummaryCardShown)
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              // if (isSumaryVisible)
-              // if (_welcomeSummaryCardShown)
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 12),
-                  padding: EdgeInsets.only(top: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(7),
-                    color: AppThemeHSL.surfaceLight,
-                  ),
-                  child: Stack(
-                    alignment: .centerLeft,
-                    children: [
-                      Column(
-                        crossAxisAlignment: .start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: Text(
-                              "Salud Financiera",
-                              style: TextStyle(
-                                color: AppThemeHSL.textPrimary,
-                                fontSize: 18,
+
+                child: Row(
+                  children: [
+                    SizedBox(width: 12),
+                    // COLUMNA IZQUIERDA: Información y Llamado a la Acción (CTA)
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: .stretch,
+                          children: [
+                            Text('Dolar contra divisas'),
+                            SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                                vertical: 0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: TextButton.icon(
+                                label: Text('EN VIVO'),
+                                onPressed: () {
+                                  debugPrint('Navegando al conversor...');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const CurrencyConverterScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.arrow_forward_rounded),
                               ),
                             ),
-                          ),
-                          DashboardFinancialHealth(),
-                        ],
+                          ],
+                        ),
                       ),
-                      // ),
-                    ],
-                  ),
+                    ),
+
+                    // COLUMNA DERECHA: El Ticker animado e independiente de Riverpod
+                    Expanded(flex: 1, child: const PremiumRateTicker()),
+                  ],
                 ),
               ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              _buildSummaryCard(),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              // 3. Sección de Metas
-              SliverToBoxAdapter(
-                child: goalsList.isNotEmpty
-                    ? GoalsSection(
-                      scrollController: _goalsScrollController, // <-- Pasamos el controlador creado
-                      focusGoalId: widget.focusGoalId,
-                      heroTag: widget
-                            .heroTag, // <--- 3. DELEGAR EL TAG A LA SECCIÓN
-                        goals: goalsList,
-                        onAddTap: _openAddGoalModal,
-                        onVisibleTap: () =>
-                            setState(() => _isGoalsVisible = !_isGoalsVisible),
-                        isVisible: _isGoalsVisible,
-                        onDelete: (id) => _confirmDeleteGoal(
-                          goalsList.firstWhere((g) => g.id == id),
-                        ),
-                        onAddMoney: _showAddMoneyDialog,
-                      )
-                    : _buildEmptyGoalsPlaceholder(),
-              ),
-              // 5. Botón expandible de transacciones
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            ],
+            ),
           ),
-        );
-      },
+
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: TarjetaPrevisualizacionDeudas(),
+            ),
+          ),
+          if (_welcomeSummaryCardShown) ...[
+            // Mover aquí tus elementos condicionales si es necesario
+          ],
+
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.only(top: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7),
+                color: AppThemeHSL.surfaceLight,
+              ),
+              child: Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 16.0),
+                        child: Text(
+                          "Salud Financiera",
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      ),
+                      DashboardFinancialHealth(),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          _buildSummaryCard(),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+          // 4. Sección de Metas (El Hero ya no se destruirá al entrar)
+          SliverToBoxAdapter(
+            child: goalsList.isNotEmpty
+                ? GoalsSection(
+                    scrollController:
+                        _goalsScrollController, // Controlador horizontal
+                    focusGoalId: widget.focusGoalId,
+                    heroTag: widget.heroTag,
+                    goals: goalsList,
+                    onAddTap: _openAddGoalModal,
+                    onVisibleTap: () =>
+                        setState(() => _isGoalsVisible = !_isGoalsVisible),
+                    isVisible: _isGoalsVisible,
+                    onDelete: (id) => _confirmDeleteGoal(
+                      goalsList.firstWhere((g) => g.id == id),
+                    ),
+                    onAddMoney: _showAddMoneyDialog,
+                  )
+                : _buildEmptyGoalsPlaceholder(),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        ],
+      ),
     );
   }
 
@@ -428,7 +540,10 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   }) {
     final appNotifications = ref.watch(notificationsProvider);
     int notifCount = appNotifications.length;
+    final predictions = ref.watch(goalPredictionProvider);
     final statusBarHeight = MediaQuery.of(context).padding.top;
+
+    print('predictions length = ${predictions.length}');
 
     return SliverAppBar(
       backgroundColor:
@@ -445,7 +560,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
       ),
       centerTitle: true,
       leading: _buildAppBarLeading(context),
-      actions: _buildAppBarActions(appNotifications, notifCount),
+      actions: _buildAppBarActions(
+        appNotifications,
+        notifCount,
+        predictions.length,
+      ),
 
       expandedHeight: 184 + kToolbarHeight + statusBarHeight, // Altura total
       collapsedHeight: kToolbarHeight + statusBarHeight,
@@ -473,27 +592,27 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final appNotifications = ref.watch(notificationsProvider);
-    int notifCount = appNotifications.length;
+  // PreferredSizeWidget _buildAppBar(BuildContext context) {
+  //   final appNotifications = ref.watch(notificationsProvider);
+  //   int notifCount = appNotifications.length;
 
-    return AppBar(
-      backgroundColor: AppThemeHSL.background,
-      title: ColorizeNamesWidget(
-        names: const ['Arees', 'Tu Finanzas', 'Tu Futuro', ' F i n x U p'],
-        colors: [
-          AppThemeHSL.textPrimary,
-          AppThemeHSL.primary,
-          AppThemeHSL.accentGold,
-          AppThemeHSL.income,
-        ],
-        fontSize: 16,
-      ),
-      centerTitle: true,
-      leading: _buildAppBarLeading(context),
-      actions: _buildAppBarActions(appNotifications, notifCount),
-    );
-  }
+  //   return AppBar(
+  //     backgroundColor: AppThemeHSL.background,
+  //     title: ColorizeNamesWidget(
+  //       names: const ['Arees', 'Tu Finanzas', 'Tu Futuro', ' F i n x U p'],
+  //       colors: [
+  //         AppThemeHSL.textPrimary,
+  //         AppThemeHSL.primary,
+  //         AppThemeHSL.accentGold,
+  //         AppThemeHSL.income,
+  //       ],
+  //       fontSize: 16,
+  //     ),
+  //     centerTitle: true,
+  //     leading: _buildAppBarLeading(context),
+  //     actions: _buildAppBarActions(appNotifications, notifCount),
+  //   );
+  // }
 
   // --- MÉTODOS DE LA APP BAR ---
   Widget _buildAppBarLeading(BuildContext context) {
@@ -517,6 +636,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
   List<Widget> _buildAppBarActions(
     List<dynamic> appNotifications,
+    int predictions,
     int notifCount,
   ) {
     return [
@@ -566,7 +686,9 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
       IconButton(
         icon: Badge(
           textStyle: const TextStyle(fontSize: 10.0),
-          backgroundColor: notifCount > 0
+          backgroundColor:
+              predictions >
+                  2 // Logica para > 0 fallando
               ? AppThemeHSL.primaryLight
               : AppThemeHSL.textDisabled,
           child: Icon(Icons.list, color: AppThemeHSL.textSecondary, size: 32),
@@ -659,85 +781,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
     );
   }
 
-  Widget _buildSliverList({
-    required bool isShowingTransactions,
-    required List<Transaction> transactions,
-    required List<Bill> bills,
-  }) {
-    final items = isShowingTransactions ? transactions : bills;
-
-    if (items.isEmpty) {
-      return SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 120.0),
-            child: Text(
-              isShowingTransactions
-                  ? "No hay movimientos"
-                  : "No hay facturas pendientes",
-              style: const TextStyle(color: Colors.white54),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (isShowingTransactions) {
-            final tx = transactions[index];
-            return SlidableItem(
-              onDelete: () async {
-                // Esperar a que termine la animación del slide
-                await Future.delayed(const Duration(milliseconds: 300));
-                _deleteTransaction(tx.id);
-              },
-              child: TransactionCard(transaction: tx),
-            );
-          } else {
-            final bill = bills[index];
-            return SlidableItem(
-              onDelete: () => _deleteBill(bill.id),
-              onToggleStatus: () => _markBillAsPaid(bill),
-              child: BillCard(bill: bill, isPaid: false),
-            );
-          }
-        },
-        childCount: isShowingTransactions ? transactions.length : bills.length,
-      ),
-    );
-  }
-
   // --- MÉTODOS DE ACCIÓN ---
-  void _markBillAsPaid(Bill bill) async {
-    // 1. Crear el objeto de transacción
-    final tx = Transaction(
-      description: "Pago: ${bill.title}",
-      amount: bill.amount,
-      type: TransactionType.expense,
-      date: DateTime.now(),
-      iconCodePoint: Icons.check_circle.codePoint,
-    );
-
-    // 2. Llamar a los notifiers
-    // Primero agregamos la transacción
-    await ref.read(transactionListNotifierProvider.notifier).addTransaction(tx);
-
-    // Luego borramos la factura
-    await ref.read(billListNotifierProvider.notifier).delete(bill.id);
-
-    // Al usar Notifiers con invalidateSelf(), la UI se actualizará sola
-  }
-
-  void _deleteTransaction(String id) {
-    ref.read(transactionListNotifierProvider.notifier).deleteTransaction(id);
-  }
-
-  void _deleteBill(String id) {
-    ref.read(billListNotifierProvider.notifier).delete(id);
-  }
 }
 
 class AddMoneyDialog extends StatefulWidget {
@@ -848,132 +892,130 @@ class HomeHeaderBackground extends StatelessWidget {
         ],
       ),
       child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Columna Izquierda: Balances Financieros
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Text(
-                      'Balance Total',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppThemeHSL.textSecondary,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w500,
-                      ),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Columna Izquierda: Balances Financieros
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(
+                    'Balance Total',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppThemeHSL.textSecondary,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w500,
                     ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Text(
-                          CurrencyFormatter.formatAmount(
-                            balance,
-                          ), // Uso del Formateador óptimo
-                          style: TextStyle(
-                            color: balance > 0
-                                ? AppThemeHSL.incomeLight
-                                : AppThemeHSL.expenseLight,
-                            // AppThemeHSL.textPrimary.withValues( alpha: .8),
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                          ),
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Text(
+                        CurrencyFormatter.formatAmount(
+                          balance,
+                        ), // Uso del Formateador óptimo
+                        style: TextStyle(
+                          color: balance > 0
+                              ? AppThemeHSL.incomeLight
+                              : AppThemeHSL.expenseLight,
+                          // AppThemeHSL.textPrimary.withValues( alpha: .8),
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    ShimmerBorderWrapper(
-                      strokeWidth: 0.5,
-                      isAnimating: true,
-                      repeat: false,
-                      shimmerColor: Colors.transparent,
-                      // balance > 0
-                      //     ? AppThemeHSL.incomeLight
-                      //     : AppThemeHSL.expenseLight,
-                      child: Movimientos(),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 24),
+                  ShimmerBorderWrapper(
+                    strokeWidth: 0.5,
+                    isAnimating: true,
+                    repeat: false,
+                    shimmerColor: Colors.transparent,
+                    // balance > 0
+                    //     ? AppThemeHSL.incomeLight
+                    //     : AppThemeHSL.expenseLight,
+                    child: Movimientos(),
+                  ),
+                ],
               ),
+            ),
 
-              // Columna Derecha: Anillo Interactivo (Stats)
-              Expanded(
-                child: Hero(
-                  tag: 'IconStatRing',
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(7),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Hero(
-                              tag: 'IconStatRing',
-                              child: StatisticsScreen(
-                                transactions: transactions,
+            // Columna Derecha: Anillo Interactivo (Stats)
+            Expanded(
+              child: Hero(
+                tag: 'IconStatRing',
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(7),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Hero(
+                            tag: 'IconStatRing',
+                            child: StatisticsScreen(transactions: transactions),
+                          ),
+                        ),
+                      );
+                    },
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: ShimmerBorderWrapper(
+                        strokeWidth: 0.2,
+                        isAnimating: true,
+                        repeat: false,
+                        shimmerColor: Colors.transparent,
+                        // balance > 0
+                        //     ? AppThemeHSL.incomeLight
+                        //     : AppThemeHSL.expenseLight,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            const BalanceLegend(),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              height: 80,
+                              width: 80,
+                              child: IconStatRing(
+                                totalBalance: balance,
+                                percentage: spentPercentage,
+                                iconData: Icons.bar_chart,
+                                iconColor: AppThemeHSL.textSecondary,
                               ),
                             ),
-                          ),
-                        );
-                      },
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: ShimmerBorderWrapper(
-                          strokeWidth: 0.2,
-                          isAnimating: true,
-                          repeat: false,
-                          shimmerColor: Colors.transparent,
-                          // balance > 0
-                          //     ? AppThemeHSL.incomeLight
-                          //     : AppThemeHSL.expenseLight,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              const BalanceLegend(),
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                height: 80,
-                                width: 80,
-                                child: IconStatRing(
-                                  totalBalance: balance,
-                                  percentage: spentPercentage,
-                                  iconData: Icons.bar_chart,
-                                  iconColor: AppThemeHSL.textSecondary,
-                                ),
-                              ),
-                              TextButton.icon(
-                                label: Text(
-                                  'Ver Stats',
-                                  style: TextStyle(
-                                    color: AppThemeHSL.textSecondary,
-                                  ),
-                                ),
-                                icon: Icon(
-                                  Icons.ads_click,
+                            TextButton.icon(
+                              label: Text(
+                                'Ver Stats',
+                                style: TextStyle(
                                   color: AppThemeHSL.textSecondary,
-                                  size: 22,
                                 ),
-                                onPressed: () {},
                               ),
-                            ],
-                          ),
+                              icon: Icon(
+                                Icons.ads_click,
+                                color: AppThemeHSL.textSecondary,
+                                size: 22,
+                              ),
+                              onPressed: () {},
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }
