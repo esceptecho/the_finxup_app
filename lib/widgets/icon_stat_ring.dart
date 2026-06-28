@@ -32,11 +32,11 @@ class IconStatRing extends StatelessWidget {
               .incomeLight // Balance positivo → verde/ingresos
         : AppThemeHSL.expense; // Balance negativo → rojo/gastos
 
-    final Color trackColor = isNeutral
-        ? Colors.white10
-        : isPositive
-        ? AppThemeHSL.incomeLight.withValues(alpha: 0.2)
-        : AppThemeHSL.expense.withValues(alpha: 0.2);
+    // final Color trackColor = isNeutral
+    //     ? Colors.white10
+    //     : isPositive
+    //     ? AppThemeHSL.incomeLight.withValues(alpha: 0.2)
+    //     : AppThemeHSL.expense.withValues(alpha: 0.2);
 
     // Color del icono según el balance
     final Color dynamicIconColor = isNeutral
@@ -54,19 +54,19 @@ class IconStatRing extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             // Efecto "Glow" dinámico según el balance
-            Container(
+            SizedBox(
               width: constraints.maxWidth,
               height: constraints.maxHeight,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: progressColor.withValues(alpha: 0.15),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
+              // decoration: BoxDecoration(
+              //   shape: BoxShape.circle,
+              //   boxShadow: [
+              //     BoxShadow(
+              //       color: progressColor.withValues(alpha: 0.15),
+              //       blurRadius: 12,
+              //       spreadRadius: 2,
+              //     ),
+              //   ],
+              // ),
             ),
 
             // Anillo de progreso animado
@@ -81,9 +81,9 @@ class IconStatRing extends StatelessWidget {
                   return CircularProgressIndicator(
                     value: value,
                     strokeWidth: strokeWidth,
-                    backgroundColor: Colors.white10,//trackColor,
+                    backgroundColor: AppThemeHSL.expenseDark,//trackColor,
                     color: progressColor,
-                    strokeCap: StrokeCap.round,
+                    strokeCap: StrokeCap.butt,
                   );
                 },
               ),
@@ -92,12 +92,12 @@ class IconStatRing extends StatelessWidget {
             // Ícono dinámico según el balance
             Container(
               padding: EdgeInsets.all(constraints.maxWidth * 0.15),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).scaffoldBackgroundColor.withValues(alpha: 0.5),
-              ),
+              // decoration: BoxDecoration(
+              //   shape: BoxShape.circle,
+              //   color: Theme.of(
+              //     context,
+              //   ).scaffoldBackgroundColor.withValues(alpha: 0.5),
+              // ),
               child: Icon(
                 _getDynamicIcon(),
                 size: iconSize,

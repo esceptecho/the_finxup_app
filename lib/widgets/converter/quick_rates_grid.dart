@@ -74,21 +74,79 @@ class RateCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Hero(
           tag: currency!.flag,
+          curve: Curves.elasticOut, // Efecto "resorte" al entrar
+          reverseCurve: Curves.easeInOutCubic, // Transición suave al volver
+          createRectTween: (begin, end) {
+            // Controla cómo cambia el tamaño/posición (opcional)
+            return RectTween(begin: begin, end: end);
+          },
+          flightShuttleBuilder:
+              (context, animation, direction, fromContext, toContext) {
+                // Construye un widget personalizado que "vuela"
+                // Útil si el diseño cambia drásticamente
+                return AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, child) {
+                    return Transform.scale(
+                      scale: animation.value * 0.5 + 0.5, // Escala de 0.5 a 1.0
+                      child: child,
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            currency!.flag,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            code,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        rate.toStringAsFixed(4),
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w400,
+                          color: AppThemeHSL.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+          placeholderBuilder: (context, size, child) {
+            // Muestra un widget mientras el Hero viaja
+            return Container(
+              width: size.width,
+              height: size.height,
+              color: Colors.transparent,
+              child: CircularProgressIndicator(),
+            );
+          },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Row(
+                mainAxisSize: .min,
                 children: [
-                  if (currency != null) ...[
-                    Text(currency!.flag, style: const TextStyle(fontSize: 16)),
-                    const SizedBox(width: 4),
-                  ],
+                  Text(currency!.flag, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 4),
                   Text(
                     code,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70
+                      color: Colors.white70,
                     ),
                   ),
                 ],

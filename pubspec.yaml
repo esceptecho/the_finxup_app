@@ -54,6 +54,7 @@ dependencies:
   intl: ^0.20.2
   isar_flutter_libs: ^3.1.0+1
   json_annotation: ^4.12.0
+  just_tooltip: ^0.2.5
   liquid_swipe: ^3.1.0
   lottie: ^3.3.3
   path: ^1.9.1
@@ -81,9 +82,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   hive_ce_generator: ^1.11.0
-  riverpod_generator: ^4.0.3
   json_serializable: ^6.14.0
   photo_view: ^0.15.0
+  riverpod_generator: ^4.0.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

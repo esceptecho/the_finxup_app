@@ -22,12 +22,14 @@ import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
 import 'package:the_finxup_app/screens/statistics_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
+import 'package:the_finxup_app/widgets/add_money_dialog.dart';
 import 'package:the_finxup_app/widgets/animated_rate_ticker.dart';
 import 'package:the_finxup_app/widgets/balance_legend.dart';
 import 'package:the_finxup_app/widgets/bill_card.dart';
 import 'package:the_finxup_app/widgets/colorize_names_widget.dart';
 import 'package:the_finxup_app/widgets/elegant_banner.dart';
 import 'package:the_finxup_app/widgets/goals_section.dart';
+import 'package:the_finxup_app/widgets/home_header_background.dart';
 import 'package:the_finxup_app/widgets/icon_stat_ring.dart';
 import 'package:the_finxup_app/widgets/movimientos.dart';
 import 'package:the_finxup_app/widgets/shimmer_border_wrapper.dart';
@@ -437,9 +439,38 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
                                   debugPrint('Navegando al conversor...');
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const CurrencyConverterScreen(),
+                                    PageRouteBuilder(
+                                      // 🔥 CONTROL DE DURACIÓN
+                                      transitionDuration: const Duration(
+                                        milliseconds: 800,
+                                      ), // Más lento
+                                      reverseTransitionDuration: const Duration(
+                                        milliseconds: 600,
+                                      ), // Vuelta más rápida
+
+                                      pageBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                          ) {
+                                            return const CurrencyConverterScreen();
+                                          },
+
+                                      // Opcional: Personalizar la transición de la página
+                                      transitionsBuilder:
+                                          (
+                                            context,
+                                            animation,
+                                            secondaryAnimation,
+                                            child,
+                                          ) {
+                                            // Mantén la transición estándar pero con la duración personalizada
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            );
+                                          },
                                     ),
                                   );
                                 },
@@ -461,10 +492,11 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
 
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
               child: TarjetaPrevisualizacionDeudas(),
             ),
           ),
+          
           if (_welcomeSummaryCardShown) ...[
             // Mover aquí tus elementos condicionales si es necesario
           ],
@@ -549,7 +581,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
       backgroundColor:
           Colors.transparent, // Fondo transparente para ver el header
       title: ColorizeNamesWidget(
-        names: const ['Arees', 'Tu Finanzas', 'Tu Futuro', ' F i n x U p'],
+        names: const ['Arees', 'Tu Finanzas', 'Tu Futuro', ' F i n z U p', ''],
         colors: [
           AppThemeHSL.textPrimary,
           AppThemeHSL.primary,
@@ -782,240 +814,4 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
   }
 
   // --- MÉTODOS DE ACCIÓN ---
-}
-
-class AddMoneyDialog extends StatefulWidget {
-  final Goal goal;
-  final ValueChanged<double> onAmountSubmitted;
-
-  const AddMoneyDialog({
-    super.key,
-    required this.goal,
-    required this.onAmountSubmitted,
-  });
-
-  @override
-  State<AddMoneyDialog> createState() => _AddMoneyDialogState();
-}
-
-class _AddMoneyDialogState extends State<AddMoneyDialog> {
-  late final TextEditingController _amountController;
-
-  @override
-  void initState() {
-    super.initState();
-    _amountController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    // SIF: Liberamos el controlador de la memoria obligatoriamente
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: AppThemeHSL.surface,
-      title: Text(
-        "Abonar a ${widget.goal.title}",
-        style: const TextStyle(color: Colors.white),
-      ),
-      content: TextField(
-        controller: _amountController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: const InputDecoration(labelText: "Monto a ahorrar"),
-        style: const TextStyle(color: Colors.white),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancelar"),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            final monto = double.tryParse(_amountController.text);
-            if (monto != null && monto > 0) {
-              widget.onAmountSubmitted(monto);
-              Navigator.pop(context);
-            }
-          },
-          child: const Text("Abonar"),
-        ),
-      ],
-    );
-  }
-}
-
-class HomeHeaderBackground extends StatelessWidget {
-  final double balance;
-  final double income;
-  final double expense;
-  final double spentPercentage;
-  final List<Transaction> transactions;
-
-  const HomeHeaderBackground({
-    super.key,
-    required this.balance,
-    required this.income,
-    required this.expense,
-    required this.spentPercentage,
-    required this.transactions,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          colorFilter: ColorFilter.mode(
-            AppThemeHSL.divider,
-            BlendMode.hardLight,
-          ),
-          image: const AssetImage('assets/fondo_degradado_login.png'),
-          fit: BoxFit.cover,
-          opacity: 0.25,
-        ),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(7),
-          bottomRight: Radius.circular(7),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppThemeHSL.accentGoldSoft.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Columna Izquierda: Balances Financieros
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    'Balance Total',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppThemeHSL.textSecondary,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Text(
-                        CurrencyFormatter.formatAmount(
-                          balance,
-                        ), // Uso del Formateador óptimo
-                        style: TextStyle(
-                          color: balance > 0
-                              ? AppThemeHSL.incomeLight
-                              : AppThemeHSL.expenseLight,
-                          // AppThemeHSL.textPrimary.withValues( alpha: .8),
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ShimmerBorderWrapper(
-                    strokeWidth: 0.5,
-                    isAnimating: true,
-                    repeat: false,
-                    shimmerColor: Colors.transparent,
-                    // balance > 0
-                    //     ? AppThemeHSL.incomeLight
-                    //     : AppThemeHSL.expenseLight,
-                    child: Movimientos(),
-                  ),
-                ],
-              ),
-            ),
-
-            // Columna Derecha: Anillo Interactivo (Stats)
-            Expanded(
-              child: Hero(
-                tag: 'IconStatRing',
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(7),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Hero(
-                            tag: 'IconStatRing',
-                            child: StatisticsScreen(transactions: transactions),
-                          ),
-                        ),
-                      );
-                    },
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: ShimmerBorderWrapper(
-                        strokeWidth: 0.2,
-                        isAnimating: true,
-                        repeat: false,
-                        shimmerColor: Colors.transparent,
-                        // balance > 0
-                        //     ? AppThemeHSL.incomeLight
-                        //     : AppThemeHSL.expenseLight,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            const BalanceLegend(),
-                            const SizedBox(height: 24),
-                            SizedBox(
-                              height: 80,
-                              width: 80,
-                              child: IconStatRing(
-                                totalBalance: balance,
-                                percentage: spentPercentage,
-                                iconData: Icons.bar_chart,
-                                iconColor: AppThemeHSL.textSecondary,
-                              ),
-                            ),
-                            TextButton.icon(
-                              label: Text(
-                                'Ver Stats',
-                                style: TextStyle(
-                                  color: AppThemeHSL.textSecondary,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.ads_click,
-                                color: AppThemeHSL.textSecondary,
-                                size: 22,
-                              ),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

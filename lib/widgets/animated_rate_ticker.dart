@@ -90,44 +90,89 @@ class _PremiumRateTickerState extends ConsumerState<PremiumRateTicker> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Hero(
-                tag: currency!.flag,
-                child: Column(
-                  key: ValueKey<String>(code),
-                  mainAxisAlignment: MainAxisAlignment.center,
-                
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(currency.flag, style: const TextStyle(fontSize: 18)),
-                        const SizedBox(width: 8),
-                      
-                        Text(
-                          code,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      rate.toStringAsFixed(
-                        2,
-                      ), // 4 decimales para mayor precisión visual
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  
-                  ],
+  tag: currency!.flag,
+  curve: Curves.elasticOut,
+  reverseCurve: Curves.easeInOutCubic,
+  createRectTween: (begin, end) {
+                  return MaterialRectArcTween(begin: begin, end: end);
+                },
+  flightShuttleBuilder: (context, animation, direction, fromContext, toContext) {
+    // Widget personalizado durante el vuelo
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: animation.value * 0.5 + 0.5, // Escala de 0.5 a 1.0
+          child: child,
+        );
+      },
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                currency.flag,
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                code,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            rate.toStringAsFixed(2),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  },
+  child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            currency.flag,
+            style: const TextStyle(fontSize: 18),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            code,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 4),
+      Text(
+        rate.toStringAsFixed(2),
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    ],
+  ),
+),
             ),
           );
         },

@@ -52,15 +52,15 @@ class TarjetaPrevisualizacionDeudas extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(7),
 
-        side: BorderSide(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        // side: BorderSide(
+        //   color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        // ),
       ),
       child: InkWell(
         onTap: () => _abrirBottomSheetDeudas(context),
         borderRadius: BorderRadius.circular(20),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           child: Row(
             children: [
               Stack(
