@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_finxup_app/models/app_notification.dart';
-import 'package:the_finxup_app/models/bill.dart';
 import 'package:the_finxup_app/models/goal.dart';
 import 'package:the_finxup_app/models/hive_transaction_model.dart';
 import 'package:the_finxup_app/models/welcome_update_videos.dart';
 import 'package:the_finxup_app/providers/dismissed_notifications_notifier.dart';
 import 'package:the_finxup_app/providers/financial_summary_provider.dart';
 import 'package:the_finxup_app/providers/goal_prediction_provider.dart';
-import 'package:the_finxup_app/providers/notification_provider.dart';
 import 'package:the_finxup_app/providers/transaction_notifiers.dart';
 import 'package:the_finxup_app/repositories/hive_repository.dart';
 import 'package:the_finxup_app/screens/currency_converter_screen.dart';
@@ -19,24 +17,16 @@ import 'package:the_finxup_app/screens/dashboard_finantial_health.dart';
 import 'package:the_finxup_app/screens/goal_prediction_screen.dart';
 import 'package:the_finxup_app/screens/new_tolerance_calculator_screen.dart';
 import 'package:the_finxup_app/screens/notificaton_list_dashboard.dart';
-import 'package:the_finxup_app/screens/statistics_screen.dart';
 import 'package:the_finxup_app/theme/app_themeHSL.dart';
 import 'package:the_finxup_app/widgets/add_goal_form.dart';
-import 'package:the_finxup_app/widgets/add_money_dialog.dart';
 import 'package:the_finxup_app/widgets/animated_rate_ticker.dart';
-import 'package:the_finxup_app/widgets/balance_legend.dart';
-import 'package:the_finxup_app/widgets/bill_card.dart';
 import 'package:the_finxup_app/widgets/colorize_names_widget.dart';
 import 'package:the_finxup_app/widgets/elegant_banner.dart';
 import 'package:the_finxup_app/widgets/goals_section.dart';
 import 'package:the_finxup_app/widgets/home_header_background.dart';
-import 'package:the_finxup_app/widgets/icon_stat_ring.dart';
-import 'package:the_finxup_app/widgets/movimientos.dart';
 import 'package:the_finxup_app/widgets/shimmer_border_wrapper.dart';
-import 'package:the_finxup_app/widgets/slidable_item.dart';
 import 'package:the_finxup_app/widgets/summary_card.dart';
 import 'package:the_finxup_app/widgets/tarjeta_previsualizacion_deudas.dart';
-import 'package:the_finxup_app/widgets/transaction_card.dart';
 import 'package:the_finxup_app/widgets/video_welcome_card.dart';
 
 class EnhancedHomeScreen extends ConsumerStatefulWidget {
@@ -489,6 +479,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               ),
             ),
           ),
+          
 
           const SliverToBoxAdapter(
             child: Padding(
@@ -496,7 +487,7 @@ class _EnhancedHomeScreenState extends ConsumerState<EnhancedHomeScreen> {
               child: TarjetaPrevisualizacionDeudas(),
             ),
           ),
-          
+
           if (_welcomeSummaryCardShown) ...[
             // Mover aquí tus elementos condicionales si es necesario
           ],

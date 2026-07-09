@@ -17,28 +17,6 @@ final transactionListNotifierProvider =
       return TransactionListNotifier();
     });
 
-// Provider para calcular el histórico de una transacción específica
-// Detalle de una transacción TransactionDetailScreen
-// final transaccionHistoricoProvider = Provider.family<double, String>((
-//   ref,
-//   transactionId,
-// ) {
-//   final transactionsAsync = ref.watch(transactionListNotifierProvider);
-
-//   return transactionsAsync.when(
-//     data: (transactions) {
-//       final transaction = transactions.firstWhere(
-//         (t) => t.id == transactionId,
-//         orElse: () => throw Exception('Transacción no encontrada'),
-//       );
-//       final notifier = ref.read(transactionListNotifierProvider.notifier);
-//       return notifier.calcularTotalHistorico(transaction);
-//     },
-//     loading: () => 0.0,
-//     error: (_, _) => 0.0,
-//   );
-// });
-
 final transaccionHistoricoProvider = Provider.family<double, String>((
   ref,
   transactionId,
@@ -81,7 +59,7 @@ class TransactionListNotifier extends AsyncNotifier<List<Transaction>> {
     _repository = ref.watch(transactionRepositoryProvider);
 
     // INICIO DE LA MAGIA DEL STREAM EN TIEMPO REAL
-    // Cada vez que Hive detecta un cambio (add, update, delete), este stream emite un even
+    // Cada vez que Hive detecta un cambio (add, update, delete), este stream emite un event
     _subscription = _repository.watchTransactions().listen(
       (transactions) {
         // Cuando el stream emite nuevos datos, actualizamos el estado del AsyncNotifier

@@ -173,6 +173,10 @@ class Transaction extends HiveObject {
   final double? recurrenceAmount;
   @HiveField(10)
   final double? recurrenceUntilNow;
+  @HiveField(11) // NUEVO: Referencia opcional a Bill
+  final String? billId; // Guardamos solo el ID para evitar duplicación
+  @HiveField(12) // NUEVO: Flag para indicar si es una factura
+  final bool isBill;
 
   Transaction({
     String? id,
@@ -186,6 +190,8 @@ class Transaction extends HiveObject {
     this.recurrence = 'Única vez',
     this.recurrenceAmount = 0.0,
     this.recurrenceUntilNow = 0.0, // Valor por defecto
+    this.billId, // NUEVO
+    this.isBill = false, // NUEVO: Por defecto no es factura
   }) : id = id ?? uuid.v4();
 
   // Conservamos copyWith porque sigue siendo útil para la UI
@@ -200,6 +206,8 @@ class Transaction extends HiveObject {
     DateTime? date,
     String? recurrence,
     double? recurrenceUntilNow,
+    String? billId, // NUEVO
+    bool? isBill, // NUEVO
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -212,6 +220,8 @@ class Transaction extends HiveObject {
       date: date ?? this.date,
       recurrence: recurrence ?? this.recurrence,
       recurrenceUntilNow: recurrenceUntilNow ?? this.recurrenceUntilNow,
+      billId: billId ?? this.billId,
+      isBill: isBill ?? this.isBill,
     );
   }
 
