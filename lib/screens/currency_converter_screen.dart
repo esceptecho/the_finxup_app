@@ -106,6 +106,8 @@ class _CurrencyConverterScreenState
         children: [
           const ConverterHeader(),
           const SizedBox(height: 24),
+          QuickRatesGrid(rates: state.rates, baseCurrency: _fromCurrency),
+          
           ConverterCard(
             fromCurrency: _fromCurrency,
             toCurrency: _toCurrency,
@@ -132,7 +134,7 @@ class _CurrencyConverterScreenState
             ),
             const SizedBox(height: 24),
           ],
-          QuickRatesGrid(rates: state.rates, baseCurrency: _fromCurrency),
+          
         ],
       ),
     );

@@ -21,11 +21,16 @@ class QuickRatesGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Tasas Actuales (1 $baseCurrency)',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: .center,
+          children: [
+            Text(
+              'Tasas Actuales (1 $baseCurrency)',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         GridView.builder(
