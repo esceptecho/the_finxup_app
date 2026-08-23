@@ -2,6 +2,8 @@
 
 A new Flutter project.
 
+Esta es la version mas avanzada de the_finxup_app con calendario, agenda de deudas, conversor de tasas actuallizadas, etc. Esta version de la app a la fecha 8/23/2026 no ha incorporado finzup_animated.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
