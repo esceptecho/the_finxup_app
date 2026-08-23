@@ -417,7 +417,7 @@ class _ExpansionFinanceInsightPanelState
             ),
             const SizedBox(height: 12),
             const Text(
-              "No hay novedades financieras hoy.\n¡Todo bajo control!",
+              "No hay novedades financieras hoy.\n¡Todo está bajo control!",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white54,
